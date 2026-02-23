@@ -6,6 +6,8 @@
 <title>pb2.io — punks on billboards, worldwide</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Bebas+Neue&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -271,10 +273,52 @@
     position: relative;
   }
 
-  /* SVG World Map */
-  #world-map {
+  /* Leaflet Map */
+  #leaflet-map {
     width: 100%;
     height: 100%;
+    background: var(--map-bg);
+  }
+
+  /* Dark tile filter for dark theme */
+  html:not(.light) .leaflet-tile {
+    filter: brightness(0.55) saturate(0.4) hue-rotate(180deg) invert(1);
+  }
+  /* Light theme – natural tiles, slightly desaturated */
+  html.light .leaflet-tile {
+    filter: saturate(0.6) brightness(0.95);
+  }
+
+  /* Hide Leaflet attribution branding (keep OSM credit) */
+  .leaflet-control-attribution {
+    background: rgba(10,10,10,0.7) !important;
+    color: #444 !important;
+    font-family: 'DM Mono', monospace !important;
+    font-size: 8px !important;
+    letter-spacing: 0.05em;
+    border-radius: 0 !important;
+  }
+  .leaflet-control-attribution a { color: #555 !important; }
+
+  /* Zoom control styling */
+  .leaflet-control-zoom a {
+    background: var(--surface) !important;
+    color: var(--text) !important;
+    border-color: var(--border) !important;
+    font-family: 'DM Mono', monospace !important;
+    width: 24px !important;
+    height: 24px !important;
+    line-height: 24px !important;
+    font-size: 16px !important;
+  }
+  .leaflet-control-zoom a:hover {
+    background: var(--feed-hover) !important;
+    color: var(--text-strong) !important;
+  }
+  .leaflet-control-zoom {
+    border: 1px solid var(--border) !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
   }
 
   .map-overlay-title {
@@ -290,31 +334,7 @@
     white-space: nowrap;
   }
 
-  /* billboard pins */
-  .bb-pin {
-    cursor: pointer;
-    transition: transform 0.2s;
-  }
-  .bb-pin:hover { transform: scale(1.4); }
-  .bb-pin-dot {
-    fill: var(--accent);
-    filter: drop-shadow(0 0 4px var(--accent));
-    animation: pinPulse 2s ease-in-out infinite;
-  }
-  .bb-pin-dot.verified {
-    fill: var(--green);
-    filter: drop-shadow(0 0 4px var(--green));
-  }
-  @keyframes pinPulse {
-    0%, 100% { r: 4; opacity: 1; }
-    50% { r: 6; opacity: 0.6; }
-  }
-
-  /* map grid lines */
-  .map-grid line {
-    stroke: var(--map-grid);
-    stroke-width: 0.5;
-  }
+  /* map grid lines — removed (Leaflet handles map rendering) */
 
   /* ── RIGHT PANEL: detail ── */
   .detail-panel {
@@ -684,18 +704,22 @@
     justify-content: flex-end;
   }
 
-  /* ── TOOLTIP ── */
-  .map-tooltip {
-    position: absolute;
-    background: var(--nav-bg);
-    border: 1px solid var(--border);
-    padding: 6px 10px;
-    font-size: 10px;
-    color: var(--text);
-    pointer-events: none;
-    z-index: 50;
-    display: none;
-    white-space: nowrap;
+  /* ── LEAFLET CUSTOM TOOLTIP ── */
+  .pb2-tooltip {
+    background: rgba(10,10,10,0.92) !important;
+    border: 1px solid #1e1e1e !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    padding: 5px 10px !important;
+    color: #d4d4d4 !important;
+    font-family: 'DM Mono', monospace !important;
+    font-size: 11px !important;
+  }
+  .pb2-tooltip::before { display: none !important; }
+  html.light .pb2-tooltip {
+    background: rgba(250,248,245,0.95) !important;
+    border-color: #ddd8d0 !important;
+    color: #2a2520 !important;
   }
 
   /* scrollbar styles */
@@ -725,10 +749,7 @@
   }
   .theme-toggle:active { transform: rotate(20deg); }
 
-  /* ── SVG MAP THEMING (applied via JS class) ── */
-  html.light #world-map rect:first-child {
-    fill: var(--map-bg);
-  }
+  /* SVG map variables kept for any future use */
 
 </style>
 </head>
@@ -765,55 +786,7 @@
   <!-- CENTER: MAP -->
   <main class="map-panel">
     <div class="map-container">
-      <svg id="world-map" viewBox="0 0 1000 500" xmlns="http://www.w3.org/2000/svg">
-        <!-- Background -->
-        <rect width="1000" height="500" fill="var(--map-bg)"/>
-        
-        <!-- Grid -->
-        <g class="map-grid">
-          <line x1="0" y1="250" x2="1000" y2="250"/>
-          <line x1="500" y1="0" x2="500" y2="500"/>
-          <line x1="0" y1="125" x2="1000" y2="125" stroke-dasharray="2,6"/>
-          <line x1="0" y1="375" x2="1000" y2="375" stroke-dasharray="2,6"/>
-          <line x1="250" y1="0" x2="250" y2="500" stroke-dasharray="2,6"/>
-          <line x1="750" y1="0" x2="750" y2="500" stroke-dasharray="2,6"/>
-        </g>
-
-        <!-- Simplified world landmasses -->
-        <!-- North America -->
-        <path d="M70,80 L130,70 L180,80 L200,100 L220,110 L230,130 L240,150 L220,170 L200,200 L190,220 L170,250 L155,270 L140,265 L120,250 L100,240 L85,230 L75,210 L65,190 L60,160 L55,130 L60,100 Z" fill="var(--map-land)" stroke="var(--map-land-stroke)" stroke-width="0.5"/>
-        <!-- Central America -->
-        <path d="M155,270 L175,280 L185,295 L175,305 L160,300 L150,285 Z" fill="var(--map-land)" stroke="var(--map-land-stroke)" stroke-width="0.5"/>
-        <!-- South America -->
-        <path d="M170,305 L200,300 L230,310 L250,340 L260,370 L255,400 L240,430 L215,450 L195,445 L175,430 L160,405 L150,375 L150,345 L155,320 Z" fill="var(--map-land)" stroke="var(--map-land-stroke)" stroke-width="0.5"/>
-        <!-- Europe -->
-        <path d="M430,80 L480,75 L500,85 L510,100 L500,115 L485,120 L470,130 L455,125 L440,120 L430,110 L425,95 Z" fill="var(--map-land)" stroke="var(--map-land-stroke)" stroke-width="0.5"/>
-        <!-- UK -->
-        <path d="M400,85 L415,80 L420,95 L410,105 L400,100 Z" fill="var(--map-land)" stroke="var(--map-land-stroke)" stroke-width="0.5"/>
-        <!-- Scandinavia -->
-        <path d="M450,55 L475,50 L490,65 L480,80 L465,75 L450,70 Z" fill="var(--map-land)" stroke="var(--map-land-stroke)" stroke-width="0.5"/>
-        <!-- Africa -->
-        <path d="M430,140 L480,135 L510,145 L520,170 L525,200 L520,240 L510,270 L495,295 L475,310 L455,305 L435,290 L420,260 L415,230 L415,195 L420,165 L425,150 Z" fill="var(--map-land)" stroke="var(--map-land-stroke)" stroke-width="0.5"/>
-        <!-- Russia / N Asia -->
-        <path d="M510,55 L620,50 L720,60 L780,70 L800,85 L785,100 L750,105 L700,110 L650,115 L600,115 L565,110 L540,105 L515,100 L505,85 Z" fill="var(--map-land)" stroke="var(--map-land-stroke)" stroke-width="0.5"/>
-        <!-- Middle East -->
-        <path d="M510,115 L560,110 L575,125 L570,150 L550,165 L525,160 L510,145 Z" fill="var(--map-land)" stroke="var(--map-land-stroke)" stroke-width="0.5"/>
-        <!-- South Asia -->
-        <path d="M575,125 L630,120 L660,130 L665,160 L650,185 L625,195 L605,185 L585,165 L570,150 Z" fill="var(--map-land)" stroke="var(--map-land-stroke)" stroke-width="0.5"/>
-        <!-- SE Asia -->
-        <path d="M665,150 L710,145 L730,160 L725,185 L705,195 L680,190 L665,175 Z" fill="var(--map-land)" stroke="var(--map-land-stroke)" stroke-width="0.5"/>
-        <!-- China / East Asia -->
-        <path d="M660,110 L750,105 L790,115 L800,135 L790,155 L765,165 L730,160 L710,145 L680,140 L660,135 Z" fill="var(--map-land)" stroke="var(--map-land-stroke)" stroke-width="0.5"/>
-        <!-- Japan -->
-        <path d="M800,105 L815,100 L825,115 L820,130 L808,130 L800,118 Z" fill="var(--map-land)" stroke="var(--map-land-stroke)" stroke-width="0.5"/>
-        <!-- Australia -->
-        <path d="M730,290 L800,280 L850,290 L870,320 L865,355 L845,375 L810,385 L775,375 L750,350 L735,320 L725,305 Z" fill="var(--map-land)" stroke="var(--map-land-stroke)" stroke-width="0.5"/>
-        <!-- New Zealand -->
-        <path d="M885,355 L895,345 L905,360 L895,375 L882,368 Z" fill="var(--map-land)" stroke="var(--map-land-stroke)" stroke-width="0.5"/>
-
-        <!-- BILLBOARD PINS (will be rendered by JS) -->
-        <g id="pinLayer"></g>
-      </svg>
+      <div id="leaflet-map"></div>
 
       <!-- Counters -->
       <div class="map-counters">
@@ -822,7 +795,6 @@
         <div class="counter-pill"><strong id="poeCount">0</strong> POEs verified</div>
       </div>
 
-      <div class="map-tooltip" id="mapTooltip"></div>
       <div class="map-overlay-title">pb2.io — punks on billboards worldwide</div>
     </div>
   </main>
@@ -1020,50 +992,106 @@ function drawPunk(canvas, punkId, attrs) {
   // no-op: replaced by real images
 }
 
-// ── RENDER PINS ON MAP ──
-const pinLayer = document.getElementById('pinLayer');
-const svg = document.getElementById('world-map');
+// ── LEAFLET MAP ──
+// Add real lat/lng to exhibitions (mapped from pitch deck locations)
+const LAT_LNG = {
+  1:  [35.6580, 139.7016],  // Miyashita Park, Shibuya
+  2:  [35.6671, 139.7491],  // Toranomon Hills
+  3:  [35.7295, 139.7109],  // Ikebukuro
+  4:  [28.4949, 77.0910],   // Gurugram
+  5:  [28.6139, 77.2090],   // New Delhi
+  6:  [19.0596, 72.8295],   // Mumbai BKC
+  7:  [52.5200, 13.4050],   // Berlin Alexanderplatz
+  8:  [48.1402, 11.5600],   // Munich Hbf
+  9:  [50.9384, 6.9570],    // Cologne Dom
+  10: [51.9226, 4.4792],    // Rotterdam Centraal
+  11: [52.3641, 4.9006],    // Amsterdam Leidseplein
+  12: [-6.2088, 106.8456],  // Jakarta Sudirman
+  13: [-8.6705, 115.2126],  // Bali Seminyak
+  14: [50.8467, 4.3517],    // Brussels Grand Place
+  15: [51.2167, 4.4210],    // Antwerp Centraal
+  16: [60.1699, 24.9384],   // Helsinki Kamppi
+  17: [60.1719, 24.9414],   // Helsinki Rautatientori
+  18: [40.4168, -3.7038],   // Madrid Puerta del Sol
+  19: [41.3810, 2.1734],    // Barcelona La Rambla
+  20: [38.7169, -9.1399],   // Lisbon Marquês
+  21: [51.5098, -0.1342],   // London Piccadilly
+  22: [51.5098, -0.1342],   // London Piccadilly (offset below)
+  23: [53.4808, -2.2426],   // Manchester Piccadilly
+  24: [44.4268, 26.1025],   // Bucharest Movieplex
+  25: [44.4550, 26.0850],   // Bucharest Floreasca
+  26: [31.9522, 35.9312],   // Amman Abdali
+  27: [-33.9015, 18.4200],  // Cape Town V&A
+  28: [45.4641, 9.1908],    // Milan Duomo
+};
 
+// Attach lat/lng to each exhibition
 EXHIBITIONS.forEach(ex => {
-  const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-  g.classList.add('bb-pin');
-  g.setAttribute('data-id', ex.id);
-  
-  const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-  circle.classList.add('bb-pin-dot');
-  if (ex.verified) circle.classList.add('verified');
-  circle.setAttribute('cx', ex.mapX);
-  circle.setAttribute('cy', ex.mapY);
-  circle.setAttribute('r', '4');
-  
-  // Ring
-  const ring = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-  ring.setAttribute('cx', ex.mapX);
-  ring.setAttribute('cy', ex.mapY);
-  ring.setAttribute('r', '8');
-  ring.setAttribute('fill', 'none');
-  ring.setAttribute('stroke', ex.verified ? 'rgba(0,255,136,0.2)' : 'rgba(255,60,0,0.2)');
-  ring.setAttribute('stroke-width', '1');
-  
-  g.appendChild(ring);
-  g.appendChild(circle);
-  pinLayer.appendChild(g);
-  
-  // Hover tooltip
-  const tooltip = document.getElementById('mapTooltip');
-  g.addEventListener('mouseenter', (e) => {
-    const rect = svg.getBoundingClientRect();
-    const scaleX = rect.width / 1000;
-    const scaleY = rect.height / 500;
-    tooltip.style.display = 'block';
-    tooltip.style.left = (ex.mapX * scaleX + rect.left - 8) + 'px';
-    tooltip.style.top = (ex.mapY * scaleY + rect.top - 40) + 'px';
-    tooltip.innerHTML = `<strong>PUNK #${ex.punk}</strong> · ${ex.city}`;
+  if (LAT_LNG[ex.id]) {
+    ex.lat = LAT_LNG[ex.id][0];
+    ex.lng = LAT_LNG[ex.id][1];
+  }
+});
+
+// Slight offset for co-located pins (same venue, different punks)
+const OFFSETS = { 22: [0.0008, 0.0008], 17: [0.001, 0.001], 25: [0.003, 0.003] };
+
+// Init Leaflet
+const leafletMap = L.map('leaflet-map', {
+  center: [30, 20],
+  zoom: 2,
+  minZoom: 2,
+  maxZoom: 16,
+  zoomControl: true,
+  attributionControl: true,
+  worldCopyJump: true,
+});
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+  maxZoom: 19,
+}).addTo(leafletMap);
+
+// Custom SVG marker factory
+function makeMarkerIcon(verified) {
+  const color = verified ? '#00cc70' : '#ff3c00';
+  const glow = verified ? '#00ff88' : '#ff3c00';
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="32" viewBox="0 0 24 32">
+      <circle cx="12" cy="10" r="8" fill="${color}" opacity="0.18"/>
+      <circle cx="12" cy="10" r="5" fill="${color}" filter="drop-shadow(0 0 4px ${glow})"/>
+      <line x1="12" y1="15" x2="12" y2="28" stroke="${color}" stroke-width="1.5" opacity="0.6"/>
+    </svg>`;
+  return L.divIcon({
+    html: svg,
+    className: '',
+    iconSize: [24, 32],
+    iconAnchor: [12, 28],
+    popupAnchor: [0, -28],
   });
-  g.addEventListener('mouseleave', () => {
-    tooltip.style.display = 'none';
+}
+
+// Add markers
+const leafletMarkers = {};
+EXHIBITIONS.forEach(ex => {
+  if (!ex.lat || !ex.lng) return;
+  const offset = OFFSETS[ex.id] || [0, 0];
+  const latlng = [ex.lat + offset[0], ex.lng + offset[1]];
+
+  const marker = L.marker(latlng, { icon: makeMarkerIcon(ex.verified) });
+
+  marker.bindTooltip(
+    `<span style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.06em"><strong>PUNK #${ex.punk}</strong> · ${ex.city}, ${ex.country}</span>`,
+    { direction: 'top', offset: [0, -4], className: 'pb2-tooltip' }
+  );
+
+  marker.on('click', () => {
+    showDetail(ex.id);
+    leafletMap.flyTo(latlng, Math.max(leafletMap.getZoom(), 10), { duration: 0.8 });
   });
-  g.addEventListener('click', () => showDetail(ex.id));
+
+  marker.addTo(leafletMap);
+  leafletMarkers[ex.id] = marker;
 });
 
 // ── RENDER FEED ──
@@ -1241,10 +1269,16 @@ function showDetail(id) {
     feedItem.style.background = 'var(--feed-selected)';
     feedItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
+
+  // Pan Leaflet map to marker
+  if (ex.lat && leafletMarkers[id]) {
+    const offset = OFFSETS[id] || [0, 0];
+    leafletMap.flyTo([ex.lat + offset[0], ex.lng + offset[1]], Math.max(leafletMap.getZoom(), 10), { duration: 0.8 });
+  }
 }
 
-// Auto-select first
-showDetail(1);
+// Auto-select first — defer so Leaflet tiles have loaded
+setTimeout(() => showDetail(1), 300);
 
 // ── MODAL ──
 function openModal() {
@@ -1300,6 +1334,10 @@ function applyTheme(isLight) {
     html.classList.remove('light');
     themeToggle.textContent = ICON_DARK;
     themeToggle.title = 'Switch to light theme';
+  }
+  // Force tile re-render so CSS filter applies immediately
+  if (typeof leafletMap !== 'undefined') {
+    setTimeout(() => leafletMap.invalidateSize(), 50);
   }
 }
 
