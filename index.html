@@ -765,28 +765,38 @@
     font-size: 10px;
     letter-spacing: 0.08em;
     height: 30px;
-    padding: 0 10px;
+    padding: 0 8px;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     cursor: pointer;
     transition: border-color 0.15s, color 0.15s;
     white-space: nowrap;
-    text-transform: uppercase;
   }
   .lang-btn:hover {
     border-color: var(--text);
     color: var(--text);
   }
   .lang-btn .lang-flag {
-    font-size: 13px;
+    font-size: 16px;
     line-height: 1;
+    font-style: normal;
+    font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+  .lang-btn .lang-code {
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-family: 'DM Mono', monospace;
   }
   .lang-btn .lang-caret {
     font-size: 8px;
-    opacity: 0.5;
-    margin-left: 2px;
+    opacity: 0.4;
+    margin-left: 1px;
     transition: transform 0.15s;
+    text-transform: none;
   }
   .lang-selector.open .lang-caret {
     transform: rotate(180deg);
@@ -823,7 +833,11 @@
     cursor: pointer;
     transition: background 0.1s, color 0.1s;
     border-bottom: 1px solid var(--border-subtle);
+  }
+  .lang-option .opt-name {
+    flex: 1;
     text-transform: uppercase;
+    letter-spacing: 0.08em;
   }
   .lang-option:last-child { border-bottom: none; }
   .lang-option:hover {
@@ -834,13 +848,23 @@
     color: var(--accent);
     background: var(--feed-hover);
   }
-  .lang-option .opt-flag { font-size: 14px; line-height: 1; }
-  .lang-option .opt-name { flex: 1; }
+  .lang-option .opt-flag {
+    font-size: 18px;
+    line-height: 1;
+    font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+    font-style: normal;
+    text-transform: none;
+    letter-spacing: 0;
+    flex-shrink: 0;
+    width: 22px;
+    text-align: center;
+  }
   .lang-option .opt-native {
     font-size: 9px;
     color: var(--dim2);
     letter-spacing: 0.04em;
     text-transform: none;
+    font-family: 'DM Mono', monospace;
   }
 
   /* Auto-detected badge */
@@ -875,7 +899,7 @@
     <div class="lang-selector" id="langSelector">
       <button class="lang-btn" id="langBtn" onclick="toggleLangDropdown()">
         <span class="lang-flag" id="langFlag">🌐</span>
-        <span id="langCode">EN</span>
+        <span class="lang-code" id="langCode">EN</span>
         <span class="lang-caret">▼</span>
       </button>
       <div class="lang-dropdown" id="langDropdown"></div>
