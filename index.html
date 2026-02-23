@@ -755,7 +755,7 @@
         <div class="billboard-sim">
           <div class="billboard-frame">
             <div class="billboard-screen">
-              <canvas id="punkCanvas" class="billboard-punk" width="24" height="24"></canvas>
+              <img id="punkImg" class="billboard-punk" alt="CryptoPunk" style="image-rendering:pixelated;height:80%;width:auto;" />
               <div class="billboard-glow"></div>
             </div>
           </div>
@@ -862,72 +862,24 @@ const EXHIBITIONS = [
   { id: 10, punk: 42, loc: "Reeperbahn, Hamburg, Germany", city: "Hamburg", lat: 53.549, lng: 9.966, date: "2025-12-24", billboard: "Ströer / Reeperbahn", duration: "24hrs", operator: "Punk #42 owner", tx: "0xf7d2...1b9a", verified: false, attrs: ["Male", "Frumpy Hair", "Chinstrap", "Earring"], mapX: 462, mapY: 78 },
 ];
 
-// ── PIXEL ART PUNK GENERATOR ──
-// Generates a simple pixelated punk face using canvas
+// ── PUNK IMAGE VIA PUNKS.ART API ──
+// Returns the URL for a real CryptoPunk PNG image
+function punkImgUrl(punkId, size = 100) {
+  return `https://punks.art/api/punks/${punkId}?format=png&size=${size}&background=punk`;
+}
+
+// Sets an <img> element to show the real punk, with pixelated rendering
+function setPunkImg(imgEl, punkId, size = 100) {
+  imgEl.src = punkImgUrl(punkId, size);
+  imgEl.style.imageRendering = 'pixelated';
+  imgEl.style.width = '100%';
+  imgEl.style.height = '100%';
+  imgEl.style.objectFit = 'contain';
+}
+
+// Legacy shim — canvas elements are replaced by <img> in feed + detail
 function drawPunk(canvas, punkId, attrs) {
-  const ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, 24, 24);
-  
-  // Base skin colors based on type
-  const isAlien = attrs.includes('Alien');
-  const isApe = attrs.includes('Ape');
-  const isFemale = attrs.includes('Female');
-  
-  let skinColor = '#c8a882';
-  if (isAlien) skinColor = '#78d6c6';
-  if (isApe) skinColor = '#6e4f30';
-  
-  const bg = '#638596'; // blue-grey background
-  ctx.fillStyle = bg;
-  ctx.fillRect(0, 0, 24, 24);
-  
-  // Head
-  ctx.fillStyle = skinColor;
-  ctx.fillRect(8, 6, 8, 10);
-  // Face details
-  ctx.fillStyle = '#00000066';
-  ctx.fillRect(9, 9, 2, 2);  // left eye
-  ctx.fillRect(13, 9, 2, 2); // right eye
-  ctx.fillStyle = '#a0786055';
-  ctx.fillRect(10, 13, 4, 1); // mouth
-  
-  // Hair color
-  const hairColors = {
-    'Mohawk Dark': '#222',
-    'Wild Blonde': '#f5d76e',
-    'Crazy Hair': '#c0392b',
-    'Red Mohawk': '#e74c3c',
-    'Do-rag': '#1a1a1a',
-    'Frumpy Hair': '#7d6142',
-    'Cap': '#2c3e50',
-    'Cap Forward': '#e74c3c',
-    'Police Cap': '#1a237e',
-    'Headband': '#e74c3c',
-  };
-  
-  let hairColor = '#333';
-  for (const [key, val] of Object.entries(hairColors)) {
-    if (attrs.includes(key)) { hairColor = val; break; }
-  }
-  
-  if (!isAlien && !isApe) {
-    ctx.fillStyle = hairColor;
-    if (isFemale) {
-      ctx.fillRect(7, 4, 10, 4);
-      ctx.fillRect(6, 6, 2, 8);
-      ctx.fillRect(16, 6, 2, 8);
-    } else {
-      ctx.fillRect(8, 4, 8, 4);
-    }
-  }
-  
-  // Accessory tint
-  if (attrs.includes('Pipe')) {
-    ctx.fillStyle = '#8B4513';
-    ctx.fillRect(14, 14, 3, 1);
-  }
-  
-  return canvas;
+  // no-op: replaced by real images
 }
 
 // ── RENDER PINS ON MAP ──
@@ -984,10 +936,11 @@ function createFeedItem(ex) {
   div.className = 'feed-item';
   div.dataset.id = ex.id;
   
-  const canvas = document.createElement('canvas');
-  canvas.width = 24; canvas.height = 24;
-  canvas.className = 'feed-punk-thumb';
-  drawPunk(canvas, ex.punk, ex.attrs);
+  const img = document.createElement('img');
+  img.className = 'feed-punk-thumb';
+  img.style.imageRendering = 'pixelated';
+  img.src = punkImgUrl(ex.punk, 36);
+  img.alt = `Punk #${ex.punk}`;
   
   const meta = document.createElement('div');
   meta.className = 'feed-meta';
@@ -999,7 +952,7 @@ function createFeedItem(ex) {
     <div class="feed-time">${timeAgo}</div>
   `;
   
-  div.appendChild(canvas);
+  div.appendChild(img);
   div.appendChild(meta);
   
   if (ex.verified) {
@@ -1040,13 +993,9 @@ function showDetail(id) {
   const dc = document.getElementById('detailContent');
   dc.classList.add('active');
   
-  // Draw punk in billboard
-  const canvas = document.getElementById('punkCanvas');
-  canvas.width = 24; canvas.height = 24;
-  drawPunk(canvas, ex.punk, ex.attrs);
-  canvas.style.height = '80%';
-  canvas.style.width = 'auto';
-  canvas.style.imageRendering = 'pixelated';
+  // Set real punk image in billboard
+  const punkImg = document.getElementById('punkImg');
+  punkImg.src = punkImgUrl(ex.punk, 200);
   
   document.getElementById('detailPunkName').textContent = `PUNK #${ex.punk}`;
   document.getElementById('detailLoc').textContent = `📍 ${ex.loc}`;
@@ -1063,49 +1012,75 @@ function showDetail(id) {
     poeVerified.style.display = 'none';
   }
   
-  // Proof photos (placeholder canvases)
+  // Proof photos — mini billboard scenes with real punk images
   const grid = document.getElementById('proofGrid');
   grid.innerHTML = '';
+  const shotLabels = ['street view', 'night shot', 'wide angle', 'close-up'];
   for (let i = 0; i < 4; i++) {
     const div = document.createElement('div');
     div.className = 'proof-photo';
-    
+    div.style.position = 'relative';
+    div.style.overflow = 'hidden';
+    div.style.background = `hsl(${(ex.id * 37 + i * 70) % 360},15%,7%)`;
+
+    // Simulated scene canvas (background atmosphere)
     const c = document.createElement('canvas');
     c.width = 160; c.height = 90;
     const ctx = c.getContext('2d');
-    // Draw a sketchy billboard scene
     const hue = (ex.id * 37 + i * 70) % 360;
-    ctx.fillStyle = `hsl(${hue},20%,8%)`;
+    ctx.fillStyle = `hsl(${hue},15%,6%)`;
     ctx.fillRect(0, 0, 160, 90);
-    ctx.fillStyle = `hsl(${hue},30%,15%)`;
-    // sky gradient suggestion
+    // atmospheric gradient
     for (let y = 0; y < 90; y++) {
-      ctx.globalAlpha = 0.03;
-      ctx.fillStyle = `hsl(${hue+30},40%,${20+y/3}%)`;
+      ctx.globalAlpha = 0.04;
+      ctx.fillStyle = `hsl(${hue + 30},40%,${18 + y / 3}%)`;
       ctx.fillRect(0, y, 160, 1);
     }
     ctx.globalAlpha = 1;
-    // billboard rectangle
-    ctx.fillStyle = '#111';
-    ctx.fillRect(50, 15, 80, 45);
-    ctx.strokeStyle = '#333';
+    // billboard frame
+    ctx.fillStyle = '#0e0e0e';
+    ctx.fillRect(42, 12, 76, 44);
+    ctx.strokeStyle = '#2a2a2a';
     ctx.lineWidth = 1;
-    ctx.strokeRect(50, 15, 80, 45);
-    // punk in billboard
-    ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(document.getElementById('punkCanvas'), 68, 20, 24*1.8, 24*1.8);
+    ctx.strokeRect(42, 12, 76, 44);
+    // inner screen glow
+    const grd = ctx.createRadialGradient(80, 34, 2, 80, 34, 38);
+    grd.addColorStop(0, 'rgba(255,60,0,0.12)');
+    grd.addColorStop(1, 'transparent');
+    ctx.fillStyle = grd;
+    ctx.fillRect(42, 12, 76, 44);
     // pole
     ctx.fillStyle = '#1a1a1a';
-    ctx.fillRect(87, 60, 4, 20);
+    ctx.fillRect(78, 56, 4, 22);
+    ctx.fillStyle = '#161616';
+    ctx.fillRect(64, 78, 32, 4);
     // noise
-    for (let n = 0; n < 200; n++) {
-      ctx.fillStyle = `rgba(255,255,255,${Math.random()*0.03})`;
-      ctx.fillRect(Math.random()*160, Math.random()*90, 1, 1);
+    for (let n = 0; n < 300; n++) {
+      ctx.fillStyle = `rgba(255,255,255,${Math.random() * 0.025})`;
+      ctx.fillRect(Math.random() * 160, Math.random() * 90, 1, 1);
     }
-    
+    c.style.position = 'absolute';
+    c.style.inset = '0';
+    c.style.width = '100%';
+    c.style.height = '100%';
     div.appendChild(c);
+
+    // Real punk image inside the billboard
+    const punkThumb = document.createElement('img');
+    punkThumb.src = punkImgUrl(ex.punk, 48);
+    punkThumb.style.cssText = `
+      position:absolute;
+      left:50px; top:16px;
+      width:60px; height:36px;
+      object-fit:contain;
+      image-rendering:pixelated;
+      z-index:2;
+    `;
+    div.appendChild(punkThumb);
+
     const label = document.createElement('span');
-    label.textContent = ['street view', 'night shot', 'wide angle', 'close-up'][i];
+    label.textContent = shotLabels[i];
+    label.style.cssText = 'position:absolute;bottom:4px;right:6px;z-index:3;font-size:8px;color:#333;letter-spacing:0.08em;';
     div.appendChild(label);
     grid.appendChild(div);
   }
@@ -1146,6 +1121,8 @@ function closeModalOut(e) {
 // ── SIMULATE LIVE UPDATES ──
 let newPunkIds = [9999, 4206, 1111, 5678];
 let cityPool = ['Mexico City', 'Singapore', 'Berlin', 'Buenos Aires', 'Hong Kong', 'Lagos'];
+let mapXPool = [170, 720, 462, 205, 760, 490];
+let mapYPool = [210, 175, 80, 340, 155, 145];
 let idx = 0;
 setInterval(() => {
   if (idx >= newPunkIds.length) return;
@@ -1156,7 +1133,7 @@ setInterval(() => {
     city: cityPool[idx % cityPool.length],
     date: '2025-12-25',
     verified: false,
-    attrs: ['Male'],
+    attrs: [],
   };
   const item = createFeedItem(fakeEx);
   feedList.insertBefore(item, feedList.firstChild);
