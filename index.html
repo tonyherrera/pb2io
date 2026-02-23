@@ -818,7 +818,7 @@
       <!-- Counters -->
       <div class="map-counters">
         <div class="counter-pill"><strong id="totalCount">0</strong> exhibitions</div>
-        <div class="counter-pill"><strong id="cityCount">0</strong> cities</div>
+        <div class="counter-pill"><strong id="countryCount">0</strong> countries</div>
         <div class="counter-pill"><strong id="poeCount">0</strong> POEs verified</div>
       </div>
 
@@ -856,6 +856,7 @@
         <div class="poe-block">
           <div class="poe-title">Proof of Exhibition</div>
           <div class="poe-row">Date <span id="poeDate">—</span></div>
+          <div class="poe-row">Country <span id="poeCountry">—</span></div>
           <div class="poe-row">Billboard <span id="poeBillboard">—</span></div>
           <div class="poe-row">Duration <span id="poeDuration">—</span></div>
           <div class="poe-row">Operator <span id="poeOperator">—</span></div>
@@ -935,17 +936,68 @@
 
 <script>
 // ── DATA ──
+// Countries in network (from Artcrush x NEORT pitch deck):
+// Japan (1000 screens), India (4000), Germany (3000), Netherlands (2810),
+// Indonesia (1000), Belgium (750), Finland (700), Spain & Portugal (500),
+// England (460), Romania (140), Jordan (100), South Africa (45), Italy (14)
+// 17,500+ screens across 11 countries, scaling to 20,000+ by end of 2026
+
 const EXHIBITIONS = [
-  { id: 1, punk: 3100, loc: "Times Square, New York, USA", city: "New York", lat: 40.758, lng: -73.985, date: "2025-11-14", billboard: "Clear Channel / 47th St", duration: "72hrs", operator: "Yuga Labs x CryptoPunk DAO", tx: "0x7a3b...f91c", verified: true, attrs: ["Alien", "Headband"], mapX: 155, mapY: 145 },
-  { id: 2, punk: 7804, loc: "Shibuya Crossing, Tokyo, Japan", city: "Tokyo", lat: 35.659, lng: 139.700, date: "2025-12-01", billboard: "JR East Digital / Shibuya 109", duration: "48hrs", operator: "Punk Holder: @tokyopunk", tx: "0x4d1a...c82e", verified: true, attrs: ["Alien", "Cap Forward", "Small Shades", "Pipe"], mapX: 808, mapY: 117 },
-  { id: 3, punk: 8348, loc: "Piccadilly Circus, London, UK", city: "London", lat: 51.510, lng: -0.134, date: "2025-12-08", billboard: "Ocean Outdoor / Piccadilly Lights", duration: "24hrs", operator: "CryptoPunks London Collective", tx: "0x9f2c...1a4d", verified: true, attrs: ["Female", "Crazy Hair", "Purple Eye Shadow"], mapX: 403, mapY: 90 },
-  { id: 4, punk: 2890, loc: "Champs-Élysées, Paris, France", city: "Paris", lat: 48.869, lng: 2.308, date: "2025-12-10", billboard: "JCDecaux / Arc de Triomphe area", duration: "36hrs", operator: "Punk #2890 owner", tx: "0xb3e7...0d5f", verified: false, attrs: ["Male", "Cap", "Nerd Glasses"], mapX: 447, mapY: 92 },
-  { id: 5, punk: 5822, loc: "Federation Square, Melbourne, AU", city: "Melbourne", lat: -37.818, lng: 144.968, date: "2025-12-12", billboard: "oOh!media / Fed Square", duration: "12hrs", operator: "Punk Art Down Under", tx: "0xc1d8...7b2a", verified: true, attrs: ["Male", "Mohawk Dark", "Eye Patch"], mapX: 820, mapY: 360 },
-  { id: 6, punk: 635, loc: "Gangnam, Seoul, South Korea", city: "Seoul", lat: 37.498, lng: 127.028, date: "2025-12-15", billboard: "S1 Media / Gangnam Station", duration: "60hrs", operator: "@seoulpunknft", tx: "0xe9a2...4c1b", verified: true, attrs: ["Female", "Wild Blonde", "Purple Eye Shadow", "Earring"], mapX: 790, mapY: 117 },
-  { id: 7, punk: 4156, loc: "São Paulo, Brazil", city: "São Paulo", lat: -23.550, lng: -46.633, date: "2025-12-18", billboard: "Eletromidia / Paulista Ave", duration: "48hrs", operator: "Punk Brasil Community", tx: "0x2f5e...8d3c", verified: false, attrs: ["Ape", "Police Cap", "Pipe"], mapX: 218, mapY: 355 },
-  { id: 8, punk: 1190, loc: "Zurich, Switzerland", city: "Zurich", lat: 47.377, lng: 8.541, date: "2025-12-20", billboard: "APG|SGA / Hauptbahnhof", duration: "120hrs", operator: "ETH Zürich Crypto Art Society", tx: "0x3a8d...e6f1", verified: true, attrs: ["Male", "Do-rag", "3D Glasses"], mapX: 468, mapY: 88 },
-  { id: 9, punk: 9918, loc: "Dubai Marina, UAE", city: "Dubai", lat: 25.080, lng: 55.139, date: "2025-12-22", billboard: "Hypermedia / Dubai Marina Walk", duration: "96hrs", operator: "@dxbcryptopunk", tx: "0x6b1c...d4e8", verified: true, attrs: ["Female", "Red Mohawk", "Clown Eyes Green"], mapX: 559, mapY: 148 },
-  { id: 10, punk: 42, loc: "Reeperbahn, Hamburg, Germany", city: "Hamburg", lat: 53.549, lng: 9.966, date: "2025-12-24", billboard: "Ströer / Reeperbahn", duration: "24hrs", operator: "Punk #42 owner", tx: "0xf7d2...1b9a", verified: false, attrs: ["Male", "Frumpy Hair", "Chinstrap", "Earring"], mapX: 462, mapY: 78 },
+  // ── JAPAN ──
+  { id: 1,  punk: 7804, loc: "Miyashita Park, Shibuya, Tokyo, Japan",       city: "Tokyo",       country: "Japan",        date: "2026-01-10", billboard: "NEORT / Miyashita Park (34 screens)",        duration: "2 weeks",  operator: "NEORT x Artcrush",      tx: "0x4d1a...c82e", verified: true,  attrs: ["Alien", "Cap Forward", "Small Shades", "Pipe"], mapX: 808, mapY: 118 },
+  { id: 2,  punk: 3100, loc: "Toranomon Hills NODE, Tokyo, Japan",           city: "Tokyo",       country: "Japan",        date: "2026-09-15", billboard: "NEORT / Tokyo NODE (5 screens)",             duration: "1 week",   operator: "NEORT x ETH Global",    tx: "0x3f8b...a21d", verified: true,  attrs: ["Alien", "Headband"],                            mapX: 812, mapY: 122 },
+  { id: 3,  punk: 9527, loc: "Ikebukuro Station, Tokyo, Japan",              city: "Tokyo",       country: "Japan",        date: "2025-11-20", billboard: "NEORT / Ikebukuro Digital",                  duration: "72hrs",    operator: "@danpolko",             tx: "0x7c2e...1f4a", verified: true,  attrs: ["Male", "Knitted Cap", "Pipe"],                  mapX: 810, mapY: 115 },
+
+  // ── INDIA ──
+  { id: 4,  punk: 2560, loc: "Cyber City, Gurugram, India",                  city: "Gurugram",    country: "India",        date: "2026-02-14", billboard: "Artcrush / Cyber City Hub",                  duration: "1 week",   operator: "Artcrush India",        tx: "0x9a3c...7b1e", verified: true,  attrs: ["Male", "Headband", "Big Shades"],               mapX: 625, mapY: 152 },
+  { id: 5,  punk: 8348, loc: "Connaught Place, New Delhi, India",            city: "New Delhi",   country: "India",        date: "2026-02-18", billboard: "Artcrush / CP Digital Wall",                 duration: "5 days",   operator: "Artcrush India",        tx: "0xb4d7...2c9f", verified: true,  attrs: ["Female", "Crazy Hair", "Purple Eye Shadow"],    mapX: 618, mapY: 148 },
+  { id: 6,  punk: 5217, loc: "Bandra-Kurla Complex, Mumbai, India",          city: "Mumbai",      country: "India",        date: "2026-03-01", billboard: "Artcrush / BKC Screens",                     duration: "4 days",   operator: "Artcrush India",        tx: "0xe1f2...4a8d", verified: false, attrs: ["Female", "Wild Blonde", "Earring"],             mapX: 614, mapY: 162 },
+
+  // ── GERMANY ──
+  { id: 7,  punk: 42,   loc: "Alexanderplatz, Berlin, Germany",             city: "Berlin",      country: "Germany",      date: "2025-12-05", billboard: "Ströer / Alexanderplatz",                    duration: "48hrs",    operator: "Artcrush x Ströer",     tx: "0xf7d2...1b9a", verified: true,  attrs: ["Male", "Frumpy Hair", "Chinstrap"],             mapX: 468, mapY: 80 },
+  { id: 8,  punk: 1190, loc: "Hauptbahnhof, Munich, Germany",               city: "Munich",      country: "Germany",      date: "2025-12-20", billboard: "APG|SGA / München Hbf",                     duration: "120hrs",   operator: "ETH Zürich Crypto Art", tx: "0x3a8d...e6f1", verified: true,  attrs: ["Male", "Do-rag", "3D Glasses"],                 mapX: 471, mapY: 85 },
+  { id: 9,  punk: 4156, loc: "Cologne Cathedral Square, Germany",           city: "Cologne",     country: "Germany",      date: "2026-01-15", billboard: "Ströer / Köln Dom",                          duration: "36hrs",    operator: "Artcrush Germany",      tx: "0x2c7a...9e3f", verified: false, attrs: ["Ape", "Police Cap", "Pipe"],                    mapX: 461, mapY: 82 },
+
+  // ── NETHERLANDS ──
+  { id: 10, punk: 6529, loc: "Rotterdam Centraal, Netherlands",             city: "Rotterdam",   country: "Netherlands",  date: "2025-11-28", billboard: "Artcrush / Rotterdam Centraal (Linda Dounia)", duration: "1 week",   operator: "Artcrush x NS Media",   tx: "0x5e9c...3d7b", verified: true,  attrs: ["Female", "Tiara", "Purple Eye Shadow"],         mapX: 448, mapY: 82 },
+  { id: 11, punk: 2890, loc: "Leidseplein, Amsterdam, Netherlands",         city: "Amsterdam",   country: "Netherlands",  date: "2026-01-22", billboard: "JCDecaux / Leidseplein",                     duration: "72hrs",    operator: "Punk #2890 owner",      tx: "0xb3e7...0d5f", verified: false, attrs: ["Male", "Cap", "Nerd Glasses"],                  mapX: 446, mapY: 80 },
+
+  // ── INDONESIA ──
+  { id: 12, punk: 9918, loc: "Sudirman CBD, Jakarta, Indonesia",            city: "Jakarta",     country: "Indonesia",    date: "2026-02-05", billboard: "Artcrush / Sudirman Digital Tower",          duration: "5 days",   operator: "@dxbcryptopunk",        tx: "0x6b1c...d4e8", verified: true,  attrs: ["Female", "Red Mohawk", "Clown Eyes Green"],     mapX: 726, mapY: 213 },
+  { id: 13, punk: 3831, loc: "Seminyak, Bali, Indonesia",                   city: "Bali",        country: "Indonesia",    date: "2026-02-12", billboard: "Artcrush / Bali Digital Hub",                duration: "48hrs",    operator: "Artcrush SEA",          tx: "0x7d3f...c12a", verified: false, attrs: ["Male", "Mohawk Dark", "Horned Rim Glasses"],    mapX: 734, mapY: 220 },
+
+  // ── BELGIUM ──
+  { id: 14, punk: 5822, loc: "Grand Place, Brussels, Belgium",              city: "Brussels",    country: "Belgium",      date: "2025-12-15", billboard: "Artcrush / Grand Place Digital",             duration: "60hrs",    operator: "Artcrush Belgium",      tx: "0xc1d8...7b2a", verified: true,  attrs: ["Male", "Mohawk Dark", "Eye Patch"],             mapX: 448, mapY: 84 },
+  { id: 15, punk: 7252, loc: "Antwerp Central Station, Belgium",            city: "Antwerp",     country: "Belgium",      date: "2026-01-18", billboard: "Artcrush / Antwerp Centraal",                duration: "3 days",   operator: "Artcrush Belgium",      tx: "0xa2e5...8f1c", verified: false, attrs: ["Zombie", "Wild Hair"],                          mapX: 446, mapY: 83 },
+
+  // ── FINLAND ──
+  { id: 16, punk: 1422, loc: "Kamppi Centre, Helsinki, Finland",            city: "Helsinki",    country: "Finland",      date: "2026-01-08", billboard: "Artcrush / Kamppi Digital",                  duration: "4 days",   operator: "Artcrush Nordic",       tx: "0xd4b9...5e2c", verified: true,  attrs: ["Female", "Straight Hair Dark", "Earring"],     mapX: 482, mapY: 60 },
+  { id: 17, punk: 8765, loc: "Rautatientori, Helsinki, Finland",            city: "Helsinki",    country: "Finland",      date: "2026-02-22", billboard: "JCDecaux / Helsinki Railway Square",         duration: "48hrs",    operator: "Artcrush Nordic",       tx: "0xf3a1...7d4b", verified: false, attrs: ["Male", "Cap", "Big Shades"],                    mapX: 484, mapY: 58 },
+
+  // ── SPAIN ──
+  { id: 18, punk: 635,  loc: "Puerta del Sol, Madrid, Spain",               city: "Madrid",      country: "Spain",        date: "2025-12-18", billboard: "Artcrush / Sol Digital",                     duration: "4 days",   operator: "Artcrush Iberia",       tx: "0xe9a2...4c1b", verified: true,  attrs: ["Female", "Wild Blonde", "Purple Eye Shadow"],  mapX: 427, mapY: 100 },
+  { id: 19, punk: 4464, loc: "La Rambla, Barcelona, Spain",                 city: "Barcelona",   country: "Spain",        date: "2026-01-25", billboard: "JCDecaux / Las Ramblas",                     duration: "3 days",   operator: "Artcrush Iberia",       tx: "0x1b8d...f3a9", verified: false, attrs: ["Male", "Fedora", "Nerd Glasses"],               mapX: 438, mapY: 99 },
+
+  // ── PORTUGAL ──
+  { id: 20, punk: 2243, loc: "Marquês de Pombal, Lisbon, Portugal",         city: "Lisbon",      country: "Portugal",     date: "2026-02-10", billboard: "Artcrush / Marquês Digital",                 duration: "72hrs",    operator: "Artcrush Iberia",       tx: "0x8c4f...2e1d", verified: true,  attrs: ["Female", "Mohawk Thin", "Hot Lipstick"],        mapX: 418, mapY: 101 },
+
+  // ── ENGLAND ──
+  { id: 21, punk: 8348, loc: "Piccadilly Circus, London, England",          city: "London",      country: "England",      date: "2025-12-08", billboard: "Ocean Outdoor / Piccadilly Lights",          duration: "24hrs",    operator: "CryptoPunks London",    tx: "0x9f2c...1a4d", verified: true,  attrs: ["Female", "Crazy Hair", "Purple Eye Shadow"],   mapX: 403, mapY: 83 },
+  { id: 22, punk: 6965, loc: "Piccadilly Circus, London, England",          city: "London",      country: "England",      date: "2026-01-30", billboard: "Ocean Outdoor / Piccadilly Lights",          duration: "48hrs",    operator: "@ekaitza.eth",          tx: "0x4a6e...9c3d", verified: true,  attrs: ["Ape", "Fedora"],                               mapX: 404, mapY: 84 },
+  { id: 23, punk: 3443, loc: "Manchester Piccadilly, England",              city: "Manchester",  country: "England",      date: "2026-02-20", billboard: "Artcrush / Manchester Piccadilly",           duration: "3 days",   operator: "Artcrush UK",           tx: "0x2d9b...e5f7", verified: false, attrs: ["Male", "Stringy Tailed Hair", "Earring"],      mapX: 401, mapY: 80 },
+
+  // ── ROMANIA ──
+  { id: 24, punk: 5831, loc: "Movieplex Mall, Bucharest, Romania",          city: "Bucharest",   country: "Romania",      date: "2025-10-14", billboard: "Artcrush / Movieplex Bucharest",             duration: "1 week",   operator: "Artcrush x ALPER",      tx: "0x6e2c...b8a1", verified: true,  attrs: ["Male", "Mohawk Dark", "Regular Shades"],       mapX: 492, mapY: 89 },
+  { id: 25, punk: 9082, loc: "Floreasca City Center, Bucharest, Romania",   city: "Bucharest",   country: "Romania",      date: "2026-01-12", billboard: "Artcrush / Floreasca Digital",               duration: "5 days",   operator: "Artcrush Romania",      tx: "0x3f7d...c4b2", verified: false, attrs: ["Female", "Blonde Bob", "Green Eye Shadow"],    mapX: 493, mapY: 90 },
+
+  // ── JORDAN ──
+  { id: 26, punk: 7121, loc: "Abdali Boulevard, Amman, Jordan",             city: "Amman",       country: "Jordan",       date: "2026-02-08", billboard: "Artcrush / Abdali Digital Walk",             duration: "4 days",   operator: "Artcrush MENA",         tx: "0x5c8a...1f3e", verified: true,  attrs: ["Male", "Hoodie", "VR"],                        mapX: 524, mapY: 135 },
+
+  // ── SOUTH AFRICA ──
+  { id: 27, punk: 4930, loc: "V&A Waterfront, Cape Town, South Africa",     city: "Cape Town",   country: "South Africa", date: "2026-01-20", billboard: "Artcrush / Waterfront Digital",              duration: "3 days",   operator: "Artcrush Africa",       tx: "0x9e1b...d7c4", verified: true,  attrs: ["Female", "Tassle Hat", "Hot Lipstick"],        mapX: 470, mapY: 352 },
+
+  // ── ITALY ──
+  { id: 28, punk: 2046, loc: "Piazza del Duomo, Milan, Italy",              city: "Milan",       country: "Italy",        date: "2026-03-05", billboard: "Artcrush / Duomo Digital",                   duration: "48hrs",    operator: "Artcrush Italy",        tx: "0xc7f3...8a2e", verified: false, attrs: ["Male", "Peak Spike Hair", "Big Shades"],       mapX: 462, mapY: 92 },
 ];
 
 // ── PUNK IMAGE VIA PUNKS.ART API ──
@@ -1067,7 +1119,7 @@ sorted.forEach(ex => feedList.appendChild(createFeedItem(ex)));
 
 // Update counters
 document.getElementById('totalCount').textContent = EXHIBITIONS.length;
-document.getElementById('cityCount').textContent = new Set(EXHIBITIONS.map(e => e.city)).size;
+document.getElementById('countryCount').textContent = new Set(EXHIBITIONS.map(e => e.country)).size;
 document.getElementById('poeCount').textContent = EXHIBITIONS.filter(e => e.verified).length;
 
 // ── SHOW DETAIL ──
@@ -1086,6 +1138,7 @@ function showDetail(id) {
   document.getElementById('detailPunkName').textContent = `PUNK #${ex.punk}`;
   document.getElementById('detailLoc').textContent = `📍 ${ex.loc}`;
   document.getElementById('poeDate').textContent = ex.date;
+  document.getElementById('poeCountry').textContent = ex.country;
   document.getElementById('poeBillboard').textContent = ex.billboard;
   document.getElementById('poeDuration').textContent = ex.duration;
   document.getElementById('poeOperator').textContent = ex.operator;
@@ -1206,9 +1259,10 @@ function closeModalOut(e) {
 
 // ── SIMULATE LIVE UPDATES ──
 let newPunkIds = [9999, 4206, 1111, 5678];
-let cityPool = ['Mexico City', 'Singapore', 'Berlin', 'Buenos Aires', 'Hong Kong', 'Lagos'];
-let mapXPool = [170, 720, 462, 205, 760, 490];
-let mapYPool = [210, 175, 80, 340, 155, 145];
+let cityPool = ['Jakarta, Indonesia', 'Chennai, India', 'Rotterdam, Netherlands', 'Bucharest, Romania'];
+let countryPool = ['Indonesia', 'India', 'Netherlands', 'Romania'];
+let mapXPool = [726, 630, 448, 492];
+let mapYPool = [213, 155, 82, 90];
 let idx = 0;
 setInterval(() => {
   if (idx >= newPunkIds.length) return;
@@ -1216,8 +1270,9 @@ setInterval(() => {
     id: 100 + idx,
     punk: newPunkIds[idx],
     loc: cityPool[idx % cityPool.length],
-    city: cityPool[idx % cityPool.length],
-    date: '2025-12-25',
+    city: cityPool[idx % cityPool.length].split(',')[0],
+    country: countryPool[idx % countryPool.length],
+    date: '2026-02-23',
     verified: false,
     attrs: [],
   };
