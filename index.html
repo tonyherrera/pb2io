@@ -9,17 +9,75 @@
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+  /* ── DARK THEME (default) ── */
   :root {
     --bg: #0a0a0a;
     --surface: #111;
     --border: #1e1e1e;
+    --border-subtle: #161616;
     --accent: #ff3c00;
-    --accent2: #ffe600;
     --text: #d4d4d4;
+    --text-strong: #eeeeee;
     --dim: #555;
+    --dim2: #333;
     --map-bg: #0d1117;
-    --green: #00ff88;
+    --map-land: #151c25;
+    --map-land-stroke: #1e2a36;
+    --map-grid: #1a1a1a;
+    --green: #00cc70;
+    --green-glow: #00ff88;
+    --nav-bg: rgba(10,10,10,0.92);
+    --billboard-bg: #111;
+    --billboard-border: #2a2a2a;
+    --poe-bg: #0d0d0d;
+    --feed-hover: #161616;
+    --feed-selected: #1a1a1a;
+    --thumb-border: #222;
+    --scrollbar: #222;
+    --big-label-color: #1e1e1e;
+    --overlay-title: #222;
+    --logo-color: #fff;
   }
+
+  /* ── LIGHT THEME ── */
+  html.light {
+    --bg: #f0ede8;
+    --surface: #faf8f5;
+    --border: #ddd8d0;
+    --border-subtle: #e8e4de;
+    --accent: #e03000;
+    --text: #2a2520;
+    --text-strong: #111;
+    --dim: #8a8078;
+    --dim2: #b0a898;
+    --map-bg: #e8e4de;
+    --map-land: #d4cfc8;
+    --map-land-stroke: #bfb9b0;
+    --map-grid: #ddd8d0;
+    --green: #007a45;
+    --green-glow: #00aa60;
+    --nav-bg: rgba(240,237,232,0.94);
+    --billboard-bg: #e8e4de;
+    --billboard-border: #c0bab2;
+    --poe-bg: #f0ede8;
+    --feed-hover: #edeae4;
+    --feed-selected: #e8e4de;
+    --thumb-border: #ccc8c0;
+    --scrollbar: #ccc8c0;
+    --big-label-color: #ddd8d0;
+    --overlay-title: #bfb9b0;
+    --logo-color: #111;
+  }
+
+  /* ── SMOOTH THEME TRANSITIONS ── */
+  *, *::before, *::after {
+    transition:
+      background-color 0.3s ease,
+      border-color 0.3s ease,
+      color 0.3s ease,
+      box-shadow 0.3s ease;
+  }
+  img, canvas, svg, .bb-pin, .bb-pin-dot { transition: none !important; }
 
   html, body {
     height: 100%;
@@ -39,7 +97,7 @@
     justify-content: space-between;
     padding: 0 24px;
     height: 48px;
-    background: rgba(10,10,10,0.92);
+    background: var(--nav-bg);
     border-bottom: 1px solid var(--border);
     backdrop-filter: blur(8px);
   }
@@ -48,7 +106,7 @@
     font-family: 'Bebas Neue', sans-serif;
     font-size: 22px;
     letter-spacing: 0.12em;
-    color: #fff;
+    color: var(--logo-color);
     display: flex;
     align-items: center;
     gap: 8px;
@@ -138,7 +196,7 @@
     overflow-y: auto;
     flex: 1;
     scrollbar-width: thin;
-    scrollbar-color: #222 transparent;
+    scrollbar-color: var(--scrollbar) transparent;
   }
 
   .feed-item {
@@ -146,7 +204,7 @@
     align-items: flex-start;
     gap: 10px;
     padding: 10px 14px;
-    border-bottom: 1px solid #161616;
+    border-bottom: 1px solid var(--border-subtle);
     cursor: pointer;
     transition: background 0.1s;
     animation: slideIn 0.4s ease;
@@ -155,13 +213,13 @@
     from { opacity: 0; transform: translateY(-8px); }
     to { opacity: 1; transform: translateY(0); }
   }
-  .feed-item:hover { background: #161616; }
+  .feed-item:hover { background: var(--feed-hover); }
 
   .feed-punk-thumb {
     width: 36px; height: 36px;
     image-rendering: pixelated;
     flex-shrink: 0;
-    border: 1px solid #222;
+    border: 1px solid var(--thumb-border);
   }
 
   .feed-meta {
@@ -171,7 +229,7 @@
   .feed-punk-id {
     font-size: 12px;
     font-weight: 500;
-    color: #eee;
+    color: var(--text-strong);
     white-space: nowrap;
   }
   .feed-location {
@@ -184,7 +242,7 @@
   }
   .feed-time {
     font-size: 9px;
-    color: #333;
+    color: var(--dim2);
     margin-top: 3px;
   }
 
@@ -227,7 +285,7 @@
     font-family: 'Bebas Neue', sans-serif;
     font-size: 11px;
     letter-spacing: 0.3em;
-    color: #222;
+    color: var(--overlay-title);
     pointer-events: none;
     white-space: nowrap;
   }
@@ -254,7 +312,7 @@
 
   /* map grid lines */
   .map-grid line {
-    stroke: #1a1a1a;
+    stroke: var(--map-grid);
     stroke-width: 0.5;
   }
 
@@ -283,7 +341,7 @@
     font-family: 'Bebas Neue', sans-serif;
     font-size: 32px;
     letter-spacing: 0.1em;
-    color: #1e1e1e;
+    color: var(--big-label-color);
     line-height: 1;
   }
   .detail-empty p {
@@ -301,7 +359,7 @@
 
   .detail-img-wrap {
     position: relative;
-    background: #000;
+    background: var(--map-bg);
     border-bottom: 1px solid var(--border);
     padding: 20px;
     display: flex;
@@ -316,8 +374,8 @@
     max-width: 260px;
   }
   .billboard-frame {
-    background: #111;
-    border: 3px solid #2a2a2a;
+    background: var(--billboard-bg);
+    border: 3px solid var(--billboard-border);
     border-radius: 2px;
     padding: 3px;
     position: relative;
@@ -327,14 +385,14 @@
     display: block;
     width: 40%;
     height: 6px;
-    background: #1a1a1a;
+    background: var(--border);
     margin: 0 auto 3px;
     border-radius: 3px 3px 0 0;
   }
   .billboard-screen {
     width: 100%;
     aspect-ratio: 16/9;
-    background: #000;
+    background: var(--map-bg);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -356,13 +414,13 @@
   .billboard-pole {
     width: 8px;
     height: 30px;
-    background: #1e1e1e;
+    background: var(--border);
     margin: 0 auto;
   }
   .billboard-base {
     width: 40px;
     height: 5px;
-    background: #1a1a1a;
+    background: var(--border-subtle);
     margin: 0 auto;
     border-radius: 2px;
   }
@@ -372,14 +430,14 @@
     flex: 1;
     overflow-y: auto;
     scrollbar-width: thin;
-    scrollbar-color: #222 transparent;
+    scrollbar-color: var(--scrollbar) transparent;
   }
 
   .detail-punk-name {
     font-family: 'Bebas Neue', sans-serif;
     font-size: 28px;
     letter-spacing: 0.08em;
-    color: #fff;
+    color: var(--text-strong);
     line-height: 1;
   }
 
@@ -391,7 +449,7 @@
   }
 
   .poe-block {
-    background: #0d0d0d;
+    background: var(--poe-bg);
     border: 1px solid var(--border);
     padding: 12px;
     margin-bottom: 14px;
@@ -409,7 +467,7 @@
     font-size: 10px;
     color: var(--dim);
     padding: 3px 0;
-    border-bottom: 1px solid #161616;
+    border-bottom: 1px solid var(--border-subtle);
   }
   .poe-row:last-child { border-bottom: none; }
   .poe-row span { color: var(--text); }
@@ -431,13 +489,13 @@
   }
   .proof-photo {
     aspect-ratio: 16/9;
-    background: #0d0d0d;
+    background: var(--poe-bg);
     border: 1px solid var(--border);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 9px;
-    color: #333;
+    color: var(--dim2);
     letter-spacing: 0.1em;
     cursor: pointer;
     overflow: hidden;
@@ -518,7 +576,7 @@
     pointer-events: none;
   }
   .counter-pill {
-    background: rgba(10,10,10,0.85);
+    background: var(--nav-bg);
     border: 1px solid var(--border);
     padding: 5px 12px;
     font-size: 10px;
@@ -534,7 +592,7 @@
   .modal-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.85);
+    background: rgba(0,0,0,0.7);
     z-index: 200;
     display: none;
     align-items: center;
@@ -594,7 +652,7 @@
     color: var(--dim);
   }
   .field-input {
-    background: #0d0d0d;
+    background: var(--poe-bg);
     border: 1px solid var(--border);
     color: var(--text);
     font-family: 'DM Mono', monospace;
@@ -607,7 +665,7 @@
   .field-input:focus { border-color: var(--accent); }
 
   .upload-zone {
-    border: 1px dashed #333;
+    border: 1px dashed var(--dim2);
     padding: 24px;
     text-align: center;
     cursor: pointer;
@@ -629,7 +687,7 @@
   /* ── TOOLTIP ── */
   .map-tooltip {
     position: absolute;
-    background: rgba(10,10,10,0.95);
+    background: var(--nav-bg);
     border: 1px solid var(--border);
     padding: 6px 10px;
     font-size: 10px;
@@ -643,7 +701,34 @@
   /* scrollbar styles */
   ::-webkit-scrollbar { width: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: #222; border-radius: 2px; }
+  ::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 2px; }
+
+  /* ── THEME TOGGLE ── */
+  .theme-toggle {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--dim);
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s, transform 0.3s ease;
+    flex-shrink: 0;
+  }
+  .theme-toggle:hover {
+    border-color: var(--text);
+    color: var(--text);
+  }
+  .theme-toggle:active { transform: rotate(20deg); }
+
+  /* ── SVG MAP THEMING (applied via JS class) ── */
+  html.light #world-map rect:first-child {
+    fill: var(--map-bg);
+  }
 
 </style>
 </head>
@@ -660,6 +745,7 @@
     <li><a href="#">about</a></li>
   </ul>
   <div class="nav-right">
+    <button class="theme-toggle" id="themeToggle" title="Toggle light/dark theme">☀</button>
     <button class="submit-btn" onclick="openModal()">+ submit exhibition</button>
   </div>
 </nav>
@@ -681,7 +767,7 @@
     <div class="map-container">
       <svg id="world-map" viewBox="0 0 1000 500" xmlns="http://www.w3.org/2000/svg">
         <!-- Background -->
-        <rect width="1000" height="500" fill="#0d1117"/>
+        <rect width="1000" height="500" fill="var(--map-bg)"/>
         
         <!-- Grid -->
         <g class="map-grid">
@@ -695,35 +781,35 @@
 
         <!-- Simplified world landmasses -->
         <!-- North America -->
-        <path d="M70,80 L130,70 L180,80 L200,100 L220,110 L230,130 L240,150 L220,170 L200,200 L190,220 L170,250 L155,270 L140,265 L120,250 L100,240 L85,230 L75,210 L65,190 L60,160 L55,130 L60,100 Z" fill="#151c25" stroke="#1e2a36" stroke-width="0.5"/>
+        <path d="M70,80 L130,70 L180,80 L200,100 L220,110 L230,130 L240,150 L220,170 L200,200 L190,220 L170,250 L155,270 L140,265 L120,250 L100,240 L85,230 L75,210 L65,190 L60,160 L55,130 L60,100 Z" fill="var(--map-land)" stroke="var(--map-land-stroke)" stroke-width="0.5"/>
         <!-- Central America -->
-        <path d="M155,270 L175,280 L185,295 L175,305 L160,300 L150,285 Z" fill="#151c25" stroke="#1e2a36" stroke-width="0.5"/>
+        <path d="M155,270 L175,280 L185,295 L175,305 L160,300 L150,285 Z" fill="var(--map-land)" stroke="var(--map-land-stroke)" stroke-width="0.5"/>
         <!-- South America -->
-        <path d="M170,305 L200,300 L230,310 L250,340 L260,370 L255,400 L240,430 L215,450 L195,445 L175,430 L160,405 L150,375 L150,345 L155,320 Z" fill="#151c25" stroke="#1e2a36" stroke-width="0.5"/>
+        <path d="M170,305 L200,300 L230,310 L250,340 L260,370 L255,400 L240,430 L215,450 L195,445 L175,430 L160,405 L150,375 L150,345 L155,320 Z" fill="var(--map-land)" stroke="var(--map-land-stroke)" stroke-width="0.5"/>
         <!-- Europe -->
-        <path d="M430,80 L480,75 L500,85 L510,100 L500,115 L485,120 L470,130 L455,125 L440,120 L430,110 L425,95 Z" fill="#151c25" stroke="#1e2a36" stroke-width="0.5"/>
+        <path d="M430,80 L480,75 L500,85 L510,100 L500,115 L485,120 L470,130 L455,125 L440,120 L430,110 L425,95 Z" fill="var(--map-land)" stroke="var(--map-land-stroke)" stroke-width="0.5"/>
         <!-- UK -->
-        <path d="M400,85 L415,80 L420,95 L410,105 L400,100 Z" fill="#151c25" stroke="#1e2a36" stroke-width="0.5"/>
+        <path d="M400,85 L415,80 L420,95 L410,105 L400,100 Z" fill="var(--map-land)" stroke="var(--map-land-stroke)" stroke-width="0.5"/>
         <!-- Scandinavia -->
-        <path d="M450,55 L475,50 L490,65 L480,80 L465,75 L450,70 Z" fill="#151c25" stroke="#1e2a36" stroke-width="0.5"/>
+        <path d="M450,55 L475,50 L490,65 L480,80 L465,75 L450,70 Z" fill="var(--map-land)" stroke="var(--map-land-stroke)" stroke-width="0.5"/>
         <!-- Africa -->
-        <path d="M430,140 L480,135 L510,145 L520,170 L525,200 L520,240 L510,270 L495,295 L475,310 L455,305 L435,290 L420,260 L415,230 L415,195 L420,165 L425,150 Z" fill="#151c25" stroke="#1e2a36" stroke-width="0.5"/>
+        <path d="M430,140 L480,135 L510,145 L520,170 L525,200 L520,240 L510,270 L495,295 L475,310 L455,305 L435,290 L420,260 L415,230 L415,195 L420,165 L425,150 Z" fill="var(--map-land)" stroke="var(--map-land-stroke)" stroke-width="0.5"/>
         <!-- Russia / N Asia -->
-        <path d="M510,55 L620,50 L720,60 L780,70 L800,85 L785,100 L750,105 L700,110 L650,115 L600,115 L565,110 L540,105 L515,100 L505,85 Z" fill="#151c25" stroke="#1e2a36" stroke-width="0.5"/>
+        <path d="M510,55 L620,50 L720,60 L780,70 L800,85 L785,100 L750,105 L700,110 L650,115 L600,115 L565,110 L540,105 L515,100 L505,85 Z" fill="var(--map-land)" stroke="var(--map-land-stroke)" stroke-width="0.5"/>
         <!-- Middle East -->
-        <path d="M510,115 L560,110 L575,125 L570,150 L550,165 L525,160 L510,145 Z" fill="#151c25" stroke="#1e2a36" stroke-width="0.5"/>
+        <path d="M510,115 L560,110 L575,125 L570,150 L550,165 L525,160 L510,145 Z" fill="var(--map-land)" stroke="var(--map-land-stroke)" stroke-width="0.5"/>
         <!-- South Asia -->
-        <path d="M575,125 L630,120 L660,130 L665,160 L650,185 L625,195 L605,185 L585,165 L570,150 Z" fill="#151c25" stroke="#1e2a36" stroke-width="0.5"/>
+        <path d="M575,125 L630,120 L660,130 L665,160 L650,185 L625,195 L605,185 L585,165 L570,150 Z" fill="var(--map-land)" stroke="var(--map-land-stroke)" stroke-width="0.5"/>
         <!-- SE Asia -->
-        <path d="M665,150 L710,145 L730,160 L725,185 L705,195 L680,190 L665,175 Z" fill="#151c25" stroke="#1e2a36" stroke-width="0.5"/>
+        <path d="M665,150 L710,145 L730,160 L725,185 L705,195 L680,190 L665,175 Z" fill="var(--map-land)" stroke="var(--map-land-stroke)" stroke-width="0.5"/>
         <!-- China / East Asia -->
-        <path d="M660,110 L750,105 L790,115 L800,135 L790,155 L765,165 L730,160 L710,145 L680,140 L660,135 Z" fill="#151c25" stroke="#1e2a36" stroke-width="0.5"/>
+        <path d="M660,110 L750,105 L790,115 L800,135 L790,155 L765,165 L730,160 L710,145 L680,140 L660,135 Z" fill="var(--map-land)" stroke="var(--map-land-stroke)" stroke-width="0.5"/>
         <!-- Japan -->
-        <path d="M800,105 L815,100 L825,115 L820,130 L808,130 L800,118 Z" fill="#151c25" stroke="#1e2a36" stroke-width="0.5"/>
+        <path d="M800,105 L815,100 L825,115 L820,130 L808,130 L800,118 Z" fill="var(--map-land)" stroke="var(--map-land-stroke)" stroke-width="0.5"/>
         <!-- Australia -->
-        <path d="M730,290 L800,280 L850,290 L870,320 L865,355 L845,375 L810,385 L775,375 L750,350 L735,320 L725,305 Z" fill="#151c25" stroke="#1e2a36" stroke-width="0.5"/>
+        <path d="M730,290 L800,280 L850,290 L870,320 L865,355 L845,375 L810,385 L775,375 L750,350 L735,320 L725,305 Z" fill="var(--map-land)" stroke="var(--map-land-stroke)" stroke-width="0.5"/>
         <!-- New Zealand -->
-        <path d="M885,355 L895,345 L905,360 L895,375 L882,368 Z" fill="#151c25" stroke="#1e2a36" stroke-width="0.5"/>
+        <path d="M885,355 L895,345 L905,360 L895,375 L882,368 Z" fill="var(--map-land)" stroke="var(--map-land-stroke)" stroke-width="0.5"/>
 
         <!-- BILLBOARD PINS (will be rendered by JS) -->
         <g id="pinLayer"></g>
@@ -1099,7 +1185,7 @@ function showDetail(id) {
   document.querySelectorAll('.feed-item').forEach(el => el.style.background = '');
   const feedItem = document.querySelector(`.feed-item[data-id="${id}"]`);
   if (feedItem) {
-    feedItem.style.background = '#1a1a1a';
+    feedItem.style.background = 'var(--feed-selected)';
     feedItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 }
@@ -1142,6 +1228,37 @@ setInterval(() => {
   document.getElementById('totalCount').textContent = EXHIBITIONS.length + idx + 1;
   idx++;
 }, 12000);
+// ── THEME TOGGLE ──
+const themeToggle = document.getElementById('themeToggle');
+const html = document.documentElement;
+
+// Icons
+const ICON_DARK = '☀';   // shown when in dark mode (click to go light)
+const ICON_LIGHT = '☾';  // shown when in light mode (click to go dark)
+
+function applyTheme(isLight) {
+  if (isLight) {
+    html.classList.add('light');
+    themeToggle.textContent = ICON_LIGHT;
+    themeToggle.title = 'Switch to dark theme';
+  } else {
+    html.classList.remove('light');
+    themeToggle.textContent = ICON_DARK;
+    themeToggle.title = 'Switch to light theme';
+  }
+}
+
+// Load saved preference, fall back to system preference
+const saved = localStorage.getItem('pb2-theme');
+const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
+const startLight = saved ? saved === 'light' : prefersLight;
+applyTheme(startLight);
+
+themeToggle.addEventListener('click', () => {
+  const goingLight = !html.classList.contains('light');
+  applyTheme(goingLight);
+  localStorage.setItem('pb2-theme', goingLight ? 'light' : 'dark');
+});
 
 </script>
 </body>
