@@ -1,0 +1,1171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>pb2.io — punks on billboards, worldwide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Bebas+Neue&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a0a;
+    --surface: #111;
+    --border: #1e1e1e;
+    --accent: #ff3c00;
+    --accent2: #ffe600;
+    --text: #d4d4d4;
+    --dim: #555;
+    --map-bg: #0d1117;
+    --green: #00ff88;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    overflow: hidden;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    height: 48px;
+    background: rgba(10,10,10,0.92);
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(8px);
+  }
+
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 0.12em;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .logo span { color: var(--accent); }
+
+  .nav-links {
+    display: flex;
+    gap: 24px;
+    list-style: none;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .nav-links a {
+    color: var(--dim);
+    text-decoration: none;
+    transition: color 0.15s;
+  }
+  .nav-links a:hover { color: var(--text); }
+
+  .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 11px;
+  }
+  .submit-btn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 6px 14px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .submit-btn:hover { opacity: 0.85; }
+
+  /* ── LAYOUT ── */
+  .main-layout {
+    display: grid;
+    grid-template-columns: 280px 1fr 320px;
+    grid-template-rows: 48px 1fr;
+    height: 100vh;
+    width: 100vw;
+  }
+
+  /* ── LEFT PANEL: live feed ── */
+  .feed-panel {
+    grid-row: 2;
+    grid-column: 1;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .panel-header {
+    padding: 14px 16px 10px;
+    border-bottom: 1px solid var(--border);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--dim);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .live-dot {
+    width: 6px; height: 6px;
+    background: var(--green);
+    border-radius: 50%;
+    box-shadow: 0 0 6px var(--green);
+    animation: pulse 1.8s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .feed-list {
+    overflow-y: auto;
+    flex: 1;
+    scrollbar-width: thin;
+    scrollbar-color: #222 transparent;
+  }
+
+  .feed-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 14px;
+    border-bottom: 1px solid #161616;
+    cursor: pointer;
+    transition: background 0.1s;
+    animation: slideIn 0.4s ease;
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .feed-item:hover { background: #161616; }
+
+  .feed-punk-thumb {
+    width: 36px; height: 36px;
+    image-rendering: pixelated;
+    flex-shrink: 0;
+    border: 1px solid #222;
+  }
+
+  .feed-meta {
+    flex: 1;
+    min-width: 0;
+  }
+  .feed-punk-id {
+    font-size: 12px;
+    font-weight: 500;
+    color: #eee;
+    white-space: nowrap;
+  }
+  .feed-location {
+    font-size: 10px;
+    color: var(--dim);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 2px;
+  }
+  .feed-time {
+    font-size: 9px;
+    color: #333;
+    margin-top: 3px;
+  }
+
+  .poe-badge {
+    font-size: 9px;
+    padding: 2px 6px;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    flex-shrink: 0;
+    margin-top: 4px;
+  }
+
+  /* ── MAP CENTER ── */
+  .map-panel {
+    grid-row: 2;
+    grid-column: 2;
+    position: relative;
+    overflow: hidden;
+    background: var(--map-bg);
+  }
+
+  .map-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+  }
+
+  /* SVG World Map */
+  #world-map {
+    width: 100%;
+    height: 100%;
+  }
+
+  .map-overlay-title {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    color: #222;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+
+  /* billboard pins */
+  .bb-pin {
+    cursor: pointer;
+    transition: transform 0.2s;
+  }
+  .bb-pin:hover { transform: scale(1.4); }
+  .bb-pin-dot {
+    fill: var(--accent);
+    filter: drop-shadow(0 0 4px var(--accent));
+    animation: pinPulse 2s ease-in-out infinite;
+  }
+  .bb-pin-dot.verified {
+    fill: var(--green);
+    filter: drop-shadow(0 0 4px var(--green));
+  }
+  @keyframes pinPulse {
+    0%, 100% { r: 4; opacity: 1; }
+    50% { r: 6; opacity: 0.6; }
+  }
+
+  /* map grid lines */
+  .map-grid line {
+    stroke: #1a1a1a;
+    stroke-width: 0.5;
+  }
+
+  /* ── RIGHT PANEL: detail ── */
+  .detail-panel {
+    grid-row: 2;
+    grid-column: 3;
+    background: var(--surface);
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .detail-empty {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 24px;
+    text-align: center;
+  }
+  .detail-empty .big-label {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 32px;
+    letter-spacing: 0.1em;
+    color: #1e1e1e;
+    line-height: 1;
+  }
+  .detail-empty p {
+    font-size: 11px;
+    color: var(--dim);
+    line-height: 1.7;
+  }
+
+  .detail-content {
+    display: none;
+    flex-direction: column;
+    height: 100%;
+  }
+  .detail-content.active { display: flex; }
+
+  .detail-img-wrap {
+    position: relative;
+    background: #000;
+    border-bottom: 1px solid var(--border);
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Simulated billboard */
+  .billboard-sim {
+    position: relative;
+    width: 100%;
+    max-width: 260px;
+  }
+  .billboard-frame {
+    background: #111;
+    border: 3px solid #2a2a2a;
+    border-radius: 2px;
+    padding: 3px;
+    position: relative;
+  }
+  .billboard-frame::before {
+    content: '';
+    display: block;
+    width: 40%;
+    height: 6px;
+    background: #1a1a1a;
+    margin: 0 auto 3px;
+    border-radius: 3px 3px 0 0;
+  }
+  .billboard-screen {
+    width: 100%;
+    aspect-ratio: 16/9;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .billboard-punk {
+    image-rendering: pixelated;
+    height: 80%;
+    width: auto;
+    filter: brightness(1.1) contrast(1.05);
+  }
+  .billboard-glow {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, rgba(255,60,0,0.15) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .billboard-pole {
+    width: 8px;
+    height: 30px;
+    background: #1e1e1e;
+    margin: 0 auto;
+  }
+  .billboard-base {
+    width: 40px;
+    height: 5px;
+    background: #1a1a1a;
+    margin: 0 auto;
+    border-radius: 2px;
+  }
+
+  .detail-info {
+    padding: 16px;
+    flex: 1;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #222 transparent;
+  }
+
+  .detail-punk-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 0.08em;
+    color: #fff;
+    line-height: 1;
+  }
+
+  .detail-loc {
+    font-size: 11px;
+    color: var(--dim);
+    margin-top: 4px;
+    margin-bottom: 14px;
+  }
+
+  .poe-block {
+    background: #0d0d0d;
+    border: 1px solid var(--border);
+    padding: 12px;
+    margin-bottom: 14px;
+  }
+  .poe-title {
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+  .poe-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--dim);
+    padding: 3px 0;
+    border-bottom: 1px solid #161616;
+  }
+  .poe-row:last-child { border-bottom: none; }
+  .poe-row span { color: var(--text); }
+
+  .poe-verified {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    color: var(--green);
+    margin-top: 10px;
+  }
+
+  .proof-photo-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    margin-top: 12px;
+  }
+  .proof-photo {
+    aspect-ratio: 16/9;
+    background: #0d0d0d;
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    color: #333;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    overflow: hidden;
+    position: relative;
+  }
+  .proof-photo canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0.5;
+  }
+  .proof-photo span { position: relative; z-index: 1; }
+
+  .attr-list {
+    margin-top: 12px;
+  }
+  .attr-tag {
+    display: inline-block;
+    font-size: 9px;
+    padding: 3px 8px;
+    border: 1px solid var(--border);
+    color: var(--dim);
+    margin: 2px 2px 2px 0;
+    letter-spacing: 0.05em;
+  }
+
+  .detail-actions {
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .btn-outline {
+    flex: 1;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--dim);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-outline:hover { border-color: var(--text); color: var(--text); }
+  .btn-primary {
+    flex: 1;
+    background: var(--accent);
+    border: 1px solid var(--accent);
+    color: #fff;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 8px;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .btn-primary:hover { opacity: 0.85; }
+
+  /* ── STATS BAR ── */
+  .stats-bar {
+    grid-row: 1;
+    grid-column: 1 / 4;
+    display: none; /* hidden, nav takes this row */
+  }
+
+  /* counter on map */
+  .map-counters {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    display: flex;
+    gap: 16px;
+    pointer-events: none;
+  }
+  .counter-pill {
+    background: rgba(10,10,10,0.85);
+    border: 1px solid var(--border);
+    padding: 5px 12px;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    color: var(--dim);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .counter-pill strong { color: var(--text); font-weight: 500; }
+
+  /* ── SUBMIT MODAL ── */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 200;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    width: 480px;
+    max-width: 90vw;
+    max-height: 90vh;
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+
+  .modal-header {
+    padding: 20px 24px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .modal-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 0.1em;
+  }
+  .modal-close {
+    background: none;
+    border: none;
+    color: var(--dim);
+    font-size: 20px;
+    cursor: pointer;
+    line-height: 1;
+  }
+  .modal-close:hover { color: var(--text); }
+
+  .modal-body {
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .field-label {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--dim);
+  }
+  .field-input {
+    background: #0d0d0d;
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    padding: 8px 10px;
+    outline: none;
+    transition: border-color 0.15s;
+    width: 100%;
+  }
+  .field-input:focus { border-color: var(--accent); }
+
+  .upload-zone {
+    border: 1px dashed #333;
+    padding: 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.15s;
+    font-size: 11px;
+    color: var(--dim);
+    line-height: 1.8;
+  }
+  .upload-zone:hover { border-color: var(--dim); }
+
+  .modal-footer {
+    padding: 14px 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+  }
+
+  /* ── TOOLTIP ── */
+  .map-tooltip {
+    position: absolute;
+    background: rgba(10,10,10,0.95);
+    border: 1px solid var(--border);
+    padding: 6px 10px;
+    font-size: 10px;
+    color: var(--text);
+    pointer-events: none;
+    z-index: 50;
+    display: none;
+    white-space: nowrap;
+  }
+
+  /* scrollbar styles */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #222; border-radius: 2px; }
+
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">pb2<span>.</span>io</div>
+  <ul class="nav-links">
+    <li><a href="#">map</a></li>
+    <li><a href="#">exhibitions</a></li>
+    <li><a href="#">punks</a></li>
+    <li><a href="#">poe archive</a></li>
+    <li><a href="#">about</a></li>
+  </ul>
+  <div class="nav-right">
+    <button class="submit-btn" onclick="openModal()">+ submit exhibition</button>
+  </div>
+</nav>
+
+<!-- MAIN LAYOUT -->
+<div class="main-layout">
+
+  <!-- LEFT: LIVE FEED -->
+  <aside class="feed-panel">
+    <div class="panel-header">
+      <div class="live-dot"></div>
+      recent exhibitions
+    </div>
+    <div class="feed-list" id="feedList"></div>
+  </aside>
+
+  <!-- CENTER: MAP -->
+  <main class="map-panel">
+    <div class="map-container">
+      <svg id="world-map" viewBox="0 0 1000 500" xmlns="http://www.w3.org/2000/svg">
+        <!-- Background -->
+        <rect width="1000" height="500" fill="#0d1117"/>
+        
+        <!-- Grid -->
+        <g class="map-grid">
+          <line x1="0" y1="250" x2="1000" y2="250"/>
+          <line x1="500" y1="0" x2="500" y2="500"/>
+          <line x1="0" y1="125" x2="1000" y2="125" stroke-dasharray="2,6"/>
+          <line x1="0" y1="375" x2="1000" y2="375" stroke-dasharray="2,6"/>
+          <line x1="250" y1="0" x2="250" y2="500" stroke-dasharray="2,6"/>
+          <line x1="750" y1="0" x2="750" y2="500" stroke-dasharray="2,6"/>
+        </g>
+
+        <!-- Simplified world landmasses -->
+        <!-- North America -->
+        <path d="M70,80 L130,70 L180,80 L200,100 L220,110 L230,130 L240,150 L220,170 L200,200 L190,220 L170,250 L155,270 L140,265 L120,250 L100,240 L85,230 L75,210 L65,190 L60,160 L55,130 L60,100 Z" fill="#151c25" stroke="#1e2a36" stroke-width="0.5"/>
+        <!-- Central America -->
+        <path d="M155,270 L175,280 L185,295 L175,305 L160,300 L150,285 Z" fill="#151c25" stroke="#1e2a36" stroke-width="0.5"/>
+        <!-- South America -->
+        <path d="M170,305 L200,300 L230,310 L250,340 L260,370 L255,400 L240,430 L215,450 L195,445 L175,430 L160,405 L150,375 L150,345 L155,320 Z" fill="#151c25" stroke="#1e2a36" stroke-width="0.5"/>
+        <!-- Europe -->
+        <path d="M430,80 L480,75 L500,85 L510,100 L500,115 L485,120 L470,130 L455,125 L440,120 L430,110 L425,95 Z" fill="#151c25" stroke="#1e2a36" stroke-width="0.5"/>
+        <!-- UK -->
+        <path d="M400,85 L415,80 L420,95 L410,105 L400,100 Z" fill="#151c25" stroke="#1e2a36" stroke-width="0.5"/>
+        <!-- Scandinavia -->
+        <path d="M450,55 L475,50 L490,65 L480,80 L465,75 L450,70 Z" fill="#151c25" stroke="#1e2a36" stroke-width="0.5"/>
+        <!-- Africa -->
+        <path d="M430,140 L480,135 L510,145 L520,170 L525,200 L520,240 L510,270 L495,295 L475,310 L455,305 L435,290 L420,260 L415,230 L415,195 L420,165 L425,150 Z" fill="#151c25" stroke="#1e2a36" stroke-width="0.5"/>
+        <!-- Russia / N Asia -->
+        <path d="M510,55 L620,50 L720,60 L780,70 L800,85 L785,100 L750,105 L700,110 L650,115 L600,115 L565,110 L540,105 L515,100 L505,85 Z" fill="#151c25" stroke="#1e2a36" stroke-width="0.5"/>
+        <!-- Middle East -->
+        <path d="M510,115 L560,110 L575,125 L570,150 L550,165 L525,160 L510,145 Z" fill="#151c25" stroke="#1e2a36" stroke-width="0.5"/>
+        <!-- South Asia -->
+        <path d="M575,125 L630,120 L660,130 L665,160 L650,185 L625,195 L605,185 L585,165 L570,150 Z" fill="#151c25" stroke="#1e2a36" stroke-width="0.5"/>
+        <!-- SE Asia -->
+        <path d="M665,150 L710,145 L730,160 L725,185 L705,195 L680,190 L665,175 Z" fill="#151c25" stroke="#1e2a36" stroke-width="0.5"/>
+        <!-- China / East Asia -->
+        <path d="M660,110 L750,105 L790,115 L800,135 L790,155 L765,165 L730,160 L710,145 L680,140 L660,135 Z" fill="#151c25" stroke="#1e2a36" stroke-width="0.5"/>
+        <!-- Japan -->
+        <path d="M800,105 L815,100 L825,115 L820,130 L808,130 L800,118 Z" fill="#151c25" stroke="#1e2a36" stroke-width="0.5"/>
+        <!-- Australia -->
+        <path d="M730,290 L800,280 L850,290 L870,320 L865,355 L845,375 L810,385 L775,375 L750,350 L735,320 L725,305 Z" fill="#151c25" stroke="#1e2a36" stroke-width="0.5"/>
+        <!-- New Zealand -->
+        <path d="M885,355 L895,345 L905,360 L895,375 L882,368 Z" fill="#151c25" stroke="#1e2a36" stroke-width="0.5"/>
+
+        <!-- BILLBOARD PINS (will be rendered by JS) -->
+        <g id="pinLayer"></g>
+      </svg>
+
+      <!-- Counters -->
+      <div class="map-counters">
+        <div class="counter-pill"><strong id="totalCount">0</strong> exhibitions</div>
+        <div class="counter-pill"><strong id="cityCount">0</strong> cities</div>
+        <div class="counter-pill"><strong id="poeCount">0</strong> POEs verified</div>
+      </div>
+
+      <div class="map-tooltip" id="mapTooltip"></div>
+      <div class="map-overlay-title">pb2.io — punks on billboards worldwide</div>
+    </div>
+  </main>
+
+  <!-- RIGHT: DETAIL -->
+  <aside class="detail-panel">
+    <div class="panel-header">
+      exhibition detail
+    </div>
+    <div class="detail-empty" id="detailEmpty">
+      <div class="big-label">SELECT<br>A PUNK</div>
+      <p>Click any pin on the map or<br>an item in the feed to view<br>exhibition details & POE.</p>
+    </div>
+    <div class="detail-content" id="detailContent">
+      <div class="detail-img-wrap">
+        <div class="billboard-sim">
+          <div class="billboard-frame">
+            <div class="billboard-screen">
+              <canvas id="punkCanvas" class="billboard-punk" width="24" height="24"></canvas>
+              <div class="billboard-glow"></div>
+            </div>
+          </div>
+          <div class="billboard-pole"></div>
+          <div class="billboard-base"></div>
+        </div>
+      </div>
+      <div class="detail-info">
+        <div class="detail-punk-name" id="detailPunkName">PUNK #0000</div>
+        <div class="detail-loc" id="detailLoc">📍 —</div>
+
+        <div class="poe-block">
+          <div class="poe-title">Proof of Exhibition</div>
+          <div class="poe-row">Date <span id="poeDate">—</span></div>
+          <div class="poe-row">Billboard <span id="poeBillboard">—</span></div>
+          <div class="poe-row">Duration <span id="poeDuration">—</span></div>
+          <div class="poe-row">Operator <span id="poeOperator">—</span></div>
+          <div class="poe-row">TX Hash <span id="poeTx" style="font-size:9px;color:#555">—</span></div>
+          <div class="poe-verified" id="poeVerified">
+            <div class="live-dot" style="background:var(--green)"></div>
+            POE Verified On-Chain
+          </div>
+        </div>
+
+        <div style="font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--dim);margin-bottom:6px;">Proof Photos</div>
+        <div class="proof-photo-grid" id="proofGrid"></div>
+
+        <div class="attr-list" id="attrList"></div>
+      </div>
+      <div class="detail-actions">
+        <button class="btn-outline">Share</button>
+        <button class="btn-primary">Mint POE</button>
+      </div>
+    </div>
+  </aside>
+
+</div>
+
+<!-- SUBMIT MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOut(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Submit Exhibition</div>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:11px;color:var(--dim);line-height:1.7;">
+        Submit your CryptoPunk billboard exhibition to be verified and archived globally. All submissions are reviewed and issued a Proof of Exhibition (POE).
+      </div>
+      <div class="field-group">
+        <div class="field-label">CryptoPunk ID</div>
+        <input class="field-input" type="text" placeholder="e.g. 3100" />
+      </div>
+      <div class="field-group">
+        <div class="field-label">Wallet Address (owner verification)</div>
+        <input class="field-input" type="text" placeholder="0x..." />
+      </div>
+      <div class="field-group">
+        <div class="field-label">Billboard Location</div>
+        <input class="field-input" type="text" placeholder="City, Country" />
+      </div>
+      <div class="field-group">
+        <div class="field-label">Billboard Operator / Vendor</div>
+        <input class="field-input" type="text" placeholder="e.g. Clear Channel, Lamar, independent" />
+      </div>
+      <div class="field-group">
+        <div class="field-label">Exhibition Dates</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <input class="field-input" type="date" />
+          <input class="field-input" type="date" />
+        </div>
+      </div>
+      <div class="field-group">
+        <div class="field-label">Proof Photos (min. 2 required)</div>
+        <div class="upload-zone">
+          Drop photos here or click to upload<br>
+          <span style="font-size:9px;color:#333">JPG, PNG · Max 10MB each · GPS metadata appreciated</span>
+        </div>
+      </div>
+      <div class="field-group">
+        <div class="field-label">Additional Notes</div>
+        <textarea class="field-input" rows="3" style="resize:vertical;"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-outline" onclick="closeModal()" style="flex:none;padding:8px 18px;">Cancel</button>
+      <button class="btn-primary" style="flex:none;padding:8px 18px;">Submit for Review</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── DATA ──
+const EXHIBITIONS = [
+  { id: 1, punk: 3100, loc: "Times Square, New York, USA", city: "New York", lat: 40.758, lng: -73.985, date: "2025-11-14", billboard: "Clear Channel / 47th St", duration: "72hrs", operator: "Yuga Labs x CryptoPunk DAO", tx: "0x7a3b...f91c", verified: true, attrs: ["Alien", "Headband"], mapX: 155, mapY: 145 },
+  { id: 2, punk: 7804, loc: "Shibuya Crossing, Tokyo, Japan", city: "Tokyo", lat: 35.659, lng: 139.700, date: "2025-12-01", billboard: "JR East Digital / Shibuya 109", duration: "48hrs", operator: "Punk Holder: @tokyopunk", tx: "0x4d1a...c82e", verified: true, attrs: ["Alien", "Cap Forward", "Small Shades", "Pipe"], mapX: 808, mapY: 117 },
+  { id: 3, punk: 8348, loc: "Piccadilly Circus, London, UK", city: "London", lat: 51.510, lng: -0.134, date: "2025-12-08", billboard: "Ocean Outdoor / Piccadilly Lights", duration: "24hrs", operator: "CryptoPunks London Collective", tx: "0x9f2c...1a4d", verified: true, attrs: ["Female", "Crazy Hair", "Purple Eye Shadow"], mapX: 403, mapY: 90 },
+  { id: 4, punk: 2890, loc: "Champs-Élysées, Paris, France", city: "Paris", lat: 48.869, lng: 2.308, date: "2025-12-10", billboard: "JCDecaux / Arc de Triomphe area", duration: "36hrs", operator: "Punk #2890 owner", tx: "0xb3e7...0d5f", verified: false, attrs: ["Male", "Cap", "Nerd Glasses"], mapX: 447, mapY: 92 },
+  { id: 5, punk: 5822, loc: "Federation Square, Melbourne, AU", city: "Melbourne", lat: -37.818, lng: 144.968, date: "2025-12-12", billboard: "oOh!media / Fed Square", duration: "12hrs", operator: "Punk Art Down Under", tx: "0xc1d8...7b2a", verified: true, attrs: ["Male", "Mohawk Dark", "Eye Patch"], mapX: 820, mapY: 360 },
+  { id: 6, punk: 635, loc: "Gangnam, Seoul, South Korea", city: "Seoul", lat: 37.498, lng: 127.028, date: "2025-12-15", billboard: "S1 Media / Gangnam Station", duration: "60hrs", operator: "@seoulpunknft", tx: "0xe9a2...4c1b", verified: true, attrs: ["Female", "Wild Blonde", "Purple Eye Shadow", "Earring"], mapX: 790, mapY: 117 },
+  { id: 7, punk: 4156, loc: "São Paulo, Brazil", city: "São Paulo", lat: -23.550, lng: -46.633, date: "2025-12-18", billboard: "Eletromidia / Paulista Ave", duration: "48hrs", operator: "Punk Brasil Community", tx: "0x2f5e...8d3c", verified: false, attrs: ["Ape", "Police Cap", "Pipe"], mapX: 218, mapY: 355 },
+  { id: 8, punk: 1190, loc: "Zurich, Switzerland", city: "Zurich", lat: 47.377, lng: 8.541, date: "2025-12-20", billboard: "APG|SGA / Hauptbahnhof", duration: "120hrs", operator: "ETH Zürich Crypto Art Society", tx: "0x3a8d...e6f1", verified: true, attrs: ["Male", "Do-rag", "3D Glasses"], mapX: 468, mapY: 88 },
+  { id: 9, punk: 9918, loc: "Dubai Marina, UAE", city: "Dubai", lat: 25.080, lng: 55.139, date: "2025-12-22", billboard: "Hypermedia / Dubai Marina Walk", duration: "96hrs", operator: "@dxbcryptopunk", tx: "0x6b1c...d4e8", verified: true, attrs: ["Female", "Red Mohawk", "Clown Eyes Green"], mapX: 559, mapY: 148 },
+  { id: 10, punk: 42, loc: "Reeperbahn, Hamburg, Germany", city: "Hamburg", lat: 53.549, lng: 9.966, date: "2025-12-24", billboard: "Ströer / Reeperbahn", duration: "24hrs", operator: "Punk #42 owner", tx: "0xf7d2...1b9a", verified: false, attrs: ["Male", "Frumpy Hair", "Chinstrap", "Earring"], mapX: 462, mapY: 78 },
+];
+
+// ── PIXEL ART PUNK GENERATOR ──
+// Generates a simple pixelated punk face using canvas
+function drawPunk(canvas, punkId, attrs) {
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, 24, 24);
+  
+  // Base skin colors based on type
+  const isAlien = attrs.includes('Alien');
+  const isApe = attrs.includes('Ape');
+  const isFemale = attrs.includes('Female');
+  
+  let skinColor = '#c8a882';
+  if (isAlien) skinColor = '#78d6c6';
+  if (isApe) skinColor = '#6e4f30';
+  
+  const bg = '#638596'; // blue-grey background
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, 24, 24);
+  
+  // Head
+  ctx.fillStyle = skinColor;
+  ctx.fillRect(8, 6, 8, 10);
+  // Face details
+  ctx.fillStyle = '#00000066';
+  ctx.fillRect(9, 9, 2, 2);  // left eye
+  ctx.fillRect(13, 9, 2, 2); // right eye
+  ctx.fillStyle = '#a0786055';
+  ctx.fillRect(10, 13, 4, 1); // mouth
+  
+  // Hair color
+  const hairColors = {
+    'Mohawk Dark': '#222',
+    'Wild Blonde': '#f5d76e',
+    'Crazy Hair': '#c0392b',
+    'Red Mohawk': '#e74c3c',
+    'Do-rag': '#1a1a1a',
+    'Frumpy Hair': '#7d6142',
+    'Cap': '#2c3e50',
+    'Cap Forward': '#e74c3c',
+    'Police Cap': '#1a237e',
+    'Headband': '#e74c3c',
+  };
+  
+  let hairColor = '#333';
+  for (const [key, val] of Object.entries(hairColors)) {
+    if (attrs.includes(key)) { hairColor = val; break; }
+  }
+  
+  if (!isAlien && !isApe) {
+    ctx.fillStyle = hairColor;
+    if (isFemale) {
+      ctx.fillRect(7, 4, 10, 4);
+      ctx.fillRect(6, 6, 2, 8);
+      ctx.fillRect(16, 6, 2, 8);
+    } else {
+      ctx.fillRect(8, 4, 8, 4);
+    }
+  }
+  
+  // Accessory tint
+  if (attrs.includes('Pipe')) {
+    ctx.fillStyle = '#8B4513';
+    ctx.fillRect(14, 14, 3, 1);
+  }
+  
+  return canvas;
+}
+
+// ── RENDER PINS ON MAP ──
+const pinLayer = document.getElementById('pinLayer');
+const svg = document.getElementById('world-map');
+
+EXHIBITIONS.forEach(ex => {
+  const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  g.classList.add('bb-pin');
+  g.setAttribute('data-id', ex.id);
+  
+  const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  circle.classList.add('bb-pin-dot');
+  if (ex.verified) circle.classList.add('verified');
+  circle.setAttribute('cx', ex.mapX);
+  circle.setAttribute('cy', ex.mapY);
+  circle.setAttribute('r', '4');
+  
+  // Ring
+  const ring = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  ring.setAttribute('cx', ex.mapX);
+  ring.setAttribute('cy', ex.mapY);
+  ring.setAttribute('r', '8');
+  ring.setAttribute('fill', 'none');
+  ring.setAttribute('stroke', ex.verified ? 'rgba(0,255,136,0.2)' : 'rgba(255,60,0,0.2)');
+  ring.setAttribute('stroke-width', '1');
+  
+  g.appendChild(ring);
+  g.appendChild(circle);
+  pinLayer.appendChild(g);
+  
+  // Hover tooltip
+  const tooltip = document.getElementById('mapTooltip');
+  g.addEventListener('mouseenter', (e) => {
+    const rect = svg.getBoundingClientRect();
+    const scaleX = rect.width / 1000;
+    const scaleY = rect.height / 500;
+    tooltip.style.display = 'block';
+    tooltip.style.left = (ex.mapX * scaleX + rect.left - 8) + 'px';
+    tooltip.style.top = (ex.mapY * scaleY + rect.top - 40) + 'px';
+    tooltip.innerHTML = `<strong>PUNK #${ex.punk}</strong> · ${ex.city}`;
+  });
+  g.addEventListener('mouseleave', () => {
+    tooltip.style.display = 'none';
+  });
+  g.addEventListener('click', () => showDetail(ex.id));
+});
+
+// ── RENDER FEED ──
+const feedList = document.getElementById('feedList');
+
+function createFeedItem(ex) {
+  const div = document.createElement('div');
+  div.className = 'feed-item';
+  div.dataset.id = ex.id;
+  
+  const canvas = document.createElement('canvas');
+  canvas.width = 24; canvas.height = 24;
+  canvas.className = 'feed-punk-thumb';
+  drawPunk(canvas, ex.punk, ex.attrs);
+  
+  const meta = document.createElement('div');
+  meta.className = 'feed-meta';
+  
+  const timeAgo = getTimeAgo(ex.date);
+  meta.innerHTML = `
+    <div class="feed-punk-id">PUNK #${ex.punk}</div>
+    <div class="feed-location">${ex.loc}</div>
+    <div class="feed-time">${timeAgo}</div>
+  `;
+  
+  div.appendChild(canvas);
+  div.appendChild(meta);
+  
+  if (ex.verified) {
+    const badge = document.createElement('div');
+    badge.className = 'poe-badge';
+    badge.textContent = 'POE';
+    meta.appendChild(badge);
+  }
+  
+  div.addEventListener('click', () => showDetail(ex.id));
+  return div;
+}
+
+function getTimeAgo(dateStr) {
+  const d = new Date(dateStr);
+  const now = new Date('2025-12-25');
+  const diff = Math.floor((now - d) / (1000 * 60 * 60 * 24));
+  if (diff === 0) return 'today';
+  if (diff === 1) return '1 day ago';
+  return `${diff} days ago`;
+}
+
+// Populate feed (newest first)
+const sorted = [...EXHIBITIONS].sort((a,b) => b.id - a.id);
+sorted.forEach(ex => feedList.appendChild(createFeedItem(ex)));
+
+// Update counters
+document.getElementById('totalCount').textContent = EXHIBITIONS.length;
+document.getElementById('cityCount').textContent = new Set(EXHIBITIONS.map(e => e.city)).size;
+document.getElementById('poeCount').textContent = EXHIBITIONS.filter(e => e.verified).length;
+
+// ── SHOW DETAIL ──
+function showDetail(id) {
+  const ex = EXHIBITIONS.find(e => e.id === id);
+  if (!ex) return;
+  
+  document.getElementById('detailEmpty').style.display = 'none';
+  const dc = document.getElementById('detailContent');
+  dc.classList.add('active');
+  
+  // Draw punk in billboard
+  const canvas = document.getElementById('punkCanvas');
+  canvas.width = 24; canvas.height = 24;
+  drawPunk(canvas, ex.punk, ex.attrs);
+  canvas.style.height = '80%';
+  canvas.style.width = 'auto';
+  canvas.style.imageRendering = 'pixelated';
+  
+  document.getElementById('detailPunkName').textContent = `PUNK #${ex.punk}`;
+  document.getElementById('detailLoc').textContent = `📍 ${ex.loc}`;
+  document.getElementById('poeDate').textContent = ex.date;
+  document.getElementById('poeBillboard').textContent = ex.billboard;
+  document.getElementById('poeDuration').textContent = ex.duration;
+  document.getElementById('poeOperator').textContent = ex.operator;
+  document.getElementById('poeTx').textContent = ex.tx;
+  
+  const poeVerified = document.getElementById('poeVerified');
+  if (ex.verified) {
+    poeVerified.style.display = 'flex';
+  } else {
+    poeVerified.style.display = 'none';
+  }
+  
+  // Proof photos (placeholder canvases)
+  const grid = document.getElementById('proofGrid');
+  grid.innerHTML = '';
+  for (let i = 0; i < 4; i++) {
+    const div = document.createElement('div');
+    div.className = 'proof-photo';
+    
+    const c = document.createElement('canvas');
+    c.width = 160; c.height = 90;
+    const ctx = c.getContext('2d');
+    // Draw a sketchy billboard scene
+    const hue = (ex.id * 37 + i * 70) % 360;
+    ctx.fillStyle = `hsl(${hue},20%,8%)`;
+    ctx.fillRect(0, 0, 160, 90);
+    ctx.fillStyle = `hsl(${hue},30%,15%)`;
+    // sky gradient suggestion
+    for (let y = 0; y < 90; y++) {
+      ctx.globalAlpha = 0.03;
+      ctx.fillStyle = `hsl(${hue+30},40%,${20+y/3}%)`;
+      ctx.fillRect(0, y, 160, 1);
+    }
+    ctx.globalAlpha = 1;
+    // billboard rectangle
+    ctx.fillStyle = '#111';
+    ctx.fillRect(50, 15, 80, 45);
+    ctx.strokeStyle = '#333';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(50, 15, 80, 45);
+    // punk in billboard
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(document.getElementById('punkCanvas'), 68, 20, 24*1.8, 24*1.8);
+    // pole
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(87, 60, 4, 20);
+    // noise
+    for (let n = 0; n < 200; n++) {
+      ctx.fillStyle = `rgba(255,255,255,${Math.random()*0.03})`;
+      ctx.fillRect(Math.random()*160, Math.random()*90, 1, 1);
+    }
+    
+    div.appendChild(c);
+    const label = document.createElement('span');
+    label.textContent = ['street view', 'night shot', 'wide angle', 'close-up'][i];
+    div.appendChild(label);
+    grid.appendChild(div);
+  }
+  
+  // Attributes
+  const attrList = document.getElementById('attrList');
+  attrList.innerHTML = `<div style="font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--dim);margin-bottom:6px;margin-top:12px;">Attributes</div>`;
+  ex.attrs.forEach(a => {
+    const span = document.createElement('span');
+    span.className = 'attr-tag';
+    span.textContent = a;
+    attrList.appendChild(span);
+  });
+  
+  // Highlight feed item
+  document.querySelectorAll('.feed-item').forEach(el => el.style.background = '');
+  const feedItem = document.querySelector(`.feed-item[data-id="${id}"]`);
+  if (feedItem) {
+    feedItem.style.background = '#1a1a1a';
+    feedItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+}
+
+// Auto-select first
+showDetail(1);
+
+// ── MODAL ──
+function openModal() {
+  document.getElementById('modalOverlay').classList.add('open');
+}
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+function closeModalOut(e) {
+  if (e.target === document.getElementById('modalOverlay')) closeModal();
+}
+
+// ── SIMULATE LIVE UPDATES ──
+let newPunkIds = [9999, 4206, 1111, 5678];
+let cityPool = ['Mexico City', 'Singapore', 'Berlin', 'Buenos Aires', 'Hong Kong', 'Lagos'];
+let idx = 0;
+setInterval(() => {
+  if (idx >= newPunkIds.length) return;
+  const fakeEx = {
+    id: 100 + idx,
+    punk: newPunkIds[idx],
+    loc: cityPool[idx % cityPool.length],
+    city: cityPool[idx % cityPool.length],
+    date: '2025-12-25',
+    verified: false,
+    attrs: ['Male'],
+  };
+  const item = createFeedItem(fakeEx);
+  feedList.insertBefore(item, feedList.firstChild);
+  item.style.background = '#1a1500';
+  setTimeout(() => { item.style.background = ''; }, 2000);
+  document.getElementById('totalCount').textContent = EXHIBITIONS.length + idx + 1;
+  idx++;
+}, 12000);
+
+</script>
+</body>
+</html>
