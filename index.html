@@ -751,6 +751,109 @@
   }
   .theme-toggle:active { transform: rotate(20deg); }
 
+  /* ── LANGUAGE SELECTOR ── */
+  .lang-selector {
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .lang-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--dim);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    height: 30px;
+    padding: 0 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+    white-space: nowrap;
+    text-transform: uppercase;
+  }
+  .lang-btn:hover {
+    border-color: var(--text);
+    color: var(--text);
+  }
+  .lang-btn .lang-flag {
+    font-size: 13px;
+    line-height: 1;
+  }
+  .lang-btn .lang-caret {
+    font-size: 8px;
+    opacity: 0.5;
+    margin-left: 2px;
+    transition: transform 0.15s;
+  }
+  .lang-selector.open .lang-caret {
+    transform: rotate(180deg);
+  }
+
+  .lang-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    min-width: 180px;
+    z-index: 300;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    max-height: 320px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar) transparent;
+  }
+  .lang-selector.open .lang-dropdown {
+    display: block;
+  }
+
+  .lang-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    color: var(--dim);
+    cursor: pointer;
+    transition: background 0.1s, color 0.1s;
+    border-bottom: 1px solid var(--border-subtle);
+    text-transform: uppercase;
+  }
+  .lang-option:last-child { border-bottom: none; }
+  .lang-option:hover {
+    background: var(--feed-hover);
+    color: var(--text);
+  }
+  .lang-option.active {
+    color: var(--accent);
+    background: var(--feed-hover);
+  }
+  .lang-option .opt-flag { font-size: 14px; line-height: 1; }
+  .lang-option .opt-name { flex: 1; }
+  .lang-option .opt-native {
+    font-size: 9px;
+    color: var(--dim2);
+    letter-spacing: 0.04em;
+    text-transform: none;
+  }
+
+  /* Auto-detected badge */
+  .lang-detected {
+    font-size: 8px;
+    padding: 1px 5px;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    letter-spacing: 0.06em;
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+
   /* SVG map variables kept for any future use */
 
 </style>
@@ -768,6 +871,16 @@
     <li><a href="#">about</a></li>
   </ul>
   <div class="nav-right">
+    <!-- Language Selector -->
+    <div class="lang-selector" id="langSelector">
+      <button class="lang-btn" id="langBtn" onclick="toggleLangDropdown()">
+        <span class="lang-flag" id="langFlag">🌐</span>
+        <span id="langCode">EN</span>
+        <span class="lang-caret">▼</span>
+      </button>
+      <div class="lang-dropdown" id="langDropdown"></div>
+    </div>
+
     <button class="theme-toggle" id="themeToggle" title="Toggle light/dark theme">☀</button>
     <button class="submit-btn" onclick="openModal()">+ submit exhibition</button>
   </div>
@@ -1319,7 +1432,793 @@ setInterval(() => {
   document.getElementById('totalCount').textContent = EXHIBITIONS.length + idx + 1;
   idx++;
 }, 12000);
-// ── THEME TOGGLE ──
+// ── LANGUAGE SELECTOR ──
+
+const LANGUAGES = [
+  // Countries in the Artcrush/NEORT network
+  { code: 'EN', name: 'English',    native: 'English',    flag: '🇬🇧', countries: ['GB', 'US', 'AU', 'NZ', 'CA', 'IE', 'ZA', 'NG', 'IN', 'SG', 'JO'] },
+  { code: 'JA', name: 'Japanese',   native: '日本語',      flag: '🇯🇵', countries: ['JP'] },
+  { code: 'DE', name: 'German',     native: 'Deutsch',    flag: '🇩🇪', countries: ['DE', 'AT', 'CH'] },
+  { code: 'NL', name: 'Dutch',      native: 'Nederlands', flag: '🇳🇱', countries: ['NL', 'BE', 'SR'] },
+  { code: 'ID', name: 'Indonesian', native: 'Bahasa Indonesia', flag: '🇮🇩', countries: ['ID'] },
+  { code: 'FR', name: 'French',     native: 'Français',   flag: '🇫🇷', countries: ['FR', 'BE', 'LU', 'CI', 'SN'] },
+  { code: 'FI', name: 'Finnish',    native: 'Suomi',      flag: '🇫🇮', countries: ['FI'] },
+  { code: 'ES', name: 'Spanish',    native: 'Español',    flag: '🇪🇸', countries: ['ES', 'MX', 'AR', 'CO', 'CL', 'PE', 'VE'] },
+  { code: 'PT', name: 'Portuguese', native: 'Português',  flag: '🇵🇹', countries: ['PT', 'BR', 'AO', 'MZ'] },
+  { code: 'RO', name: 'Romanian',   native: 'Română',     flag: '🇷🇴', countries: ['RO', 'MD'] },
+  { code: 'AR', name: 'Arabic',     native: 'العربية',    flag: '🇯🇴', countries: ['JO', 'SA', 'AE', 'EG', 'IQ', 'MA'] },
+  { code: 'HI', name: 'Hindi',      native: 'हिन्दी',      flag: '🇮🇳', countries: ['IN'] },
+  { code: 'IT', name: 'Italian',    native: 'Italiano',   flag: '🇮🇹', countries: ['IT', 'SM', 'VA'] },
+  { code: 'KO', name: 'Korean',     native: '한국어',      flag: '🇰🇷', countries: ['KR'] },
+  { code: 'ZH', name: 'Chinese',    native: '中文',        flag: '🇨🇳', countries: ['CN', 'TW', 'HK', 'MO'] },
+];
+
+// UI string translations for all interface labels
+const TRANSLATIONS = {
+  EN: {
+    recentExhibitions: 'recent exhibitions',
+    exhibitionDetail:  'exhibition detail',
+    selectPunk:        'SELECT\nA PUNK',
+    selectHint:        'Click any pin on the map or\nan item in the feed to view\nexhibition details & POE.',
+    proofOf:           'Proof of Exhibition',
+    date:              'Date',
+    country:           'Country',
+    billboard:         'Billboard',
+    duration:          'Duration',
+    operator:          'Operator',
+    txHash:            'TX Hash',
+    poeVerified:       'POE Verified On-Chain',
+    proofPhotos:       'Proof Photos',
+    attributes:        'Attributes',
+    share:             'Share',
+    mintPoe:           'Mint POE',
+    submitBtn:         '+ submit exhibition',
+    submitTitle:       'Submit Exhibition',
+    submitDesc:        'Submit your CryptoPunk billboard exhibition to be verified and archived globally. All submissions are reviewed and issued a Proof of Exhibition (POE).',
+    punkId:            'CryptoPunk ID',
+    wallet:            'Wallet Address (owner verification)',
+    location:          'Billboard Location',
+    vendor:            'Billboard Operator / Vendor',
+    dates:             'Exhibition Dates',
+    photos:            'Proof Photos (min. 2 required)',
+    photosHint:        'Drop photos here or click to upload',
+    notes:             'Additional Notes',
+    cancel:            'Cancel',
+    submitReview:      'Submit for Review',
+    exhibitions:       'exhibitions',
+    countries:         'countries',
+    poesVerified:      'POEs verified',
+    navMap:            'map',
+    navExhibitions:    'exhibitions',
+    navPunks:          'punks',
+    navPoe:            'poe archive',
+    navAbout:          'about',
+  },
+  JA: {
+    recentExhibitions: '最新の展示',
+    exhibitionDetail:  '展示詳細',
+    selectPunk:        'パンクを\n選択',
+    selectHint:        'マップのピン、またはフィード\nのアイテムをクリックして\n展示詳細とPOEを確認',
+    proofOf:           '展示証明',
+    date:              '日付',
+    country:           '国',
+    billboard:         'ビルボード',
+    duration:          '期間',
+    operator:          '運営者',
+    txHash:            'TXハッシュ',
+    poeVerified:       'POEオンチェーン認証済',
+    proofPhotos:       '証明写真',
+    attributes:        '属性',
+    share:             '共有',
+    mintPoe:           'POEミント',
+    submitBtn:         '+ 展示を申請',
+    submitTitle:       '展示を申請',
+    submitDesc:        'あなたのCryptoPunkビルボード展示を申請して、グローバルに認証・アーカイブされます。',
+    punkId:            'CryptoPunk ID',
+    wallet:            'ウォレットアドレス（所有者確認）',
+    location:          'ビルボードの場所',
+    vendor:            'ビルボード運営者',
+    dates:             '展示期間',
+    photos:            '証明写真（最低2枚）',
+    photosHint:        'ここにドロップまたはクリックしてアップロード',
+    notes:             '備考',
+    cancel:            'キャンセル',
+    submitReview:      '申請する',
+    exhibitions:       '展示',
+    countries:         '国',
+    poesVerified:      'POE認証済',
+    navMap:            'マップ',
+    navExhibitions:    '展示',
+    navPunks:          'パンク',
+    navPoe:            'POEアーカイブ',
+    navAbout:          '概要',
+  },
+  DE: {
+    recentExhibitions: 'aktuelle Ausstellungen',
+    exhibitionDetail:  'Ausstellungsdetails',
+    selectPunk:        'PUNK\nWÄHLEN',
+    selectHint:        'Klicke auf eine Nadel oder einen\nEintrag im Feed, um Details\nund den POE zu sehen.',
+    proofOf:           'Ausstellungsnachweis',
+    date:              'Datum',
+    country:           'Land',
+    billboard:         'Billboard',
+    duration:          'Dauer',
+    operator:          'Betreiber',
+    txHash:            'TX Hash',
+    poeVerified:       'POE On-Chain verifiziert',
+    proofPhotos:       'Beweisfotos',
+    attributes:        'Attribute',
+    share:             'Teilen',
+    mintPoe:           'POE minten',
+    submitBtn:         '+ Ausstellung einreichen',
+    submitTitle:       'Ausstellung einreichen',
+    submitDesc:        'Reiche deine CryptoPunk-Billboard-Ausstellung zur weltweiten Verifizierung ein.',
+    punkId:            'CryptoPunk ID',
+    wallet:            'Wallet-Adresse (Eigentümerverifizierung)',
+    location:          'Billboard-Standort',
+    vendor:            'Billboard-Betreiber',
+    dates:             'Ausstellungsdaten',
+    photos:            'Beweisfotos (mind. 2 erforderlich)',
+    photosHint:        'Fotos hier ablegen oder zum Hochladen klicken',
+    notes:             'Anmerkungen',
+    cancel:            'Abbrechen',
+    submitReview:      'Zur Prüfung einreichen',
+    exhibitions:       'Ausstellungen',
+    countries:         'Länder',
+    poesVerified:      'POEs verifiziert',
+    navMap:            'Karte',
+    navExhibitions:    'Ausstellungen',
+    navPunks:          'Punks',
+    navPoe:            'POE Archiv',
+    navAbout:          'Über uns',
+  },
+  NL: {
+    recentExhibitions: 'recente tentoonstellingen',
+    exhibitionDetail:  'tentoonstelling detail',
+    selectPunk:        'SELECTEER\nEEN PUNK',
+    selectHint:        'Klik op een pin of item in de\nfeed om details en POE\nte bekijken.',
+    proofOf:           'Bewijs van Tentoonstelling',
+    date:              'Datum',
+    country:           'Land',
+    billboard:         'Billboard',
+    duration:          'Duur',
+    operator:          'Operator',
+    txHash:            'TX Hash',
+    poeVerified:       'POE On-Chain Geverifieerd',
+    proofPhotos:       'Bewijsfoto\'s',
+    attributes:        'Attributen',
+    share:             'Delen',
+    mintPoe:           'POE Minten',
+    submitBtn:         '+ tentoonstelling indienen',
+    submitTitle:       'Tentoonstelling Indienen',
+    submitDesc:        'Dien uw CryptoPunk billboard tentoonstelling in voor wereldwijde verificatie.',
+    punkId:            'CryptoPunk ID',
+    wallet:            'Wallet Adres (eigenaar verificatie)',
+    location:          'Billboard Locatie',
+    vendor:            'Billboard Operator',
+    dates:             'Tentoonstellingsdatums',
+    photos:            'Bewijsfoto\'s (min. 2 vereist)',
+    photosHint:        'Foto\'s hier neerzetten of klik om te uploaden',
+    notes:             'Aanvullende opmerkingen',
+    cancel:            'Annuleren',
+    submitReview:      'Indienen ter beoordeling',
+    exhibitions:       'tentoonstellingen',
+    countries:         'landen',
+    poesVerified:      'POEs geverifieerd',
+    navMap:            'kaart',
+    navExhibitions:    'tentoonstellingen',
+    navPunks:          'punks',
+    navPoe:            'POE archief',
+    navAbout:          'over',
+  },
+  ID: {
+    recentExhibitions: 'pameran terkini',
+    exhibitionDetail:  'detail pameran',
+    selectPunk:        'PILIH\nPUNK',
+    selectHint:        'Klik pin di peta atau item\ndi feed untuk melihat detail\npameran & POE.',
+    proofOf:           'Bukti Pameran',
+    date:              'Tanggal',
+    country:           'Negara',
+    billboard:         'Billboard',
+    duration:          'Durasi',
+    operator:          'Operator',
+    txHash:            'TX Hash',
+    poeVerified:       'POE Terverifikasi On-Chain',
+    proofPhotos:       'Foto Bukti',
+    attributes:        'Atribut',
+    share:             'Bagikan',
+    mintPoe:           'Mint POE',
+    submitBtn:         '+ kirim pameran',
+    submitTitle:       'Kirim Pameran',
+    submitDesc:        'Kirimkan pameran billboard CryptoPunk Anda untuk diverifikasi secara global.',
+    punkId:            'CryptoPunk ID',
+    wallet:            'Alamat Wallet (verifikasi pemilik)',
+    location:          'Lokasi Billboard',
+    vendor:            'Operator Billboard',
+    dates:             'Tanggal Pameran',
+    photos:            'Foto Bukti (min. 2 diperlukan)',
+    photosHint:        'Letakkan foto di sini atau klik untuk unggah',
+    notes:             'Catatan Tambahan',
+    cancel:            'Batal',
+    submitReview:      'Kirim untuk Ditinjau',
+    exhibitions:       'pameran',
+    countries:         'negara',
+    poesVerified:      'POE terverifikasi',
+    navMap:            'peta',
+    navExhibitions:    'pameran',
+    navPunks:          'punks',
+    navPoe:            'arsip POE',
+    navAbout:          'tentang',
+  },
+  FR: {
+    recentExhibitions: 'expositions récentes',
+    exhibitionDetail:  'détail exposition',
+    selectPunk:        'SÉLECT-\nIONNER',
+    selectHint:        'Cliquez sur une épingle ou un\nélément du fil pour voir les\ndétails et le POE.',
+    proofOf:           'Preuve d\'Exposition',
+    date:              'Date',
+    country:           'Pays',
+    billboard:         'Panneau',
+    duration:          'Durée',
+    operator:          'Opérateur',
+    txHash:            'Hash TX',
+    poeVerified:       'POE Vérifié On-Chain',
+    proofPhotos:       'Photos de Preuve',
+    attributes:        'Attributs',
+    share:             'Partager',
+    mintPoe:           'Créer POE',
+    submitBtn:         '+ soumettre exposition',
+    submitTitle:       'Soumettre une Exposition',
+    submitDesc:        'Soumettez votre exposition CryptoPunk pour vérification et archivage mondial.',
+    punkId:            'ID CryptoPunk',
+    wallet:            'Adresse Wallet (vérification propriétaire)',
+    location:          'Emplacement Panneau',
+    vendor:            'Opérateur Panneau',
+    dates:             'Dates d\'Exposition',
+    photos:            'Photos de Preuve (min. 2 requises)',
+    photosHint:        'Déposez des photos ici ou cliquez pour télécharger',
+    notes:             'Notes Supplémentaires',
+    cancel:            'Annuler',
+    submitReview:      'Soumettre pour Examen',
+    exhibitions:       'expositions',
+    countries:         'pays',
+    poesVerified:      'POEs vérifiés',
+    navMap:            'carte',
+    navExhibitions:    'expositions',
+    navPunks:          'punks',
+    navPoe:            'archive POE',
+    navAbout:          'à propos',
+  },
+  FI: {
+    recentExhibitions: 'viimeisimmät näyttelyt',
+    exhibitionDetail:  'näyttelyn tiedot',
+    selectPunk:        'VALITSE\nPUNK',
+    selectHint:        'Klikkaa nastaa kartalla tai\nkohde syötteessä nähdäksesi\nnäyttelyn tiedot ja POE.',
+    proofOf:           'Näyttelytodiste',
+    date:              'Päivämäärä',
+    country:           'Maa',
+    billboard:         'Mainostaulu',
+    duration:          'Kesto',
+    operator:          'Operaattori',
+    txHash:            'TX-tiiviste',
+    poeVerified:       'POE Vahvistettu Ketjussa',
+    proofPhotos:       'Todistuskuvat',
+    attributes:        'Ominaisuudet',
+    share:             'Jaa',
+    mintPoe:           'Luo POE',
+    submitBtn:         '+ lähetä näyttely',
+    submitTitle:       'Lähetä Näyttely',
+    submitDesc:        'Lähetä CryptoPunk-mainostaulu­näyttelysi maailmanlaajuiseen vahvistukseen.',
+    punkId:            'CryptoPunk ID',
+    wallet:            'Lompakko-osoite (omistajan vahvistus)',
+    location:          'Mainostaulun Sijainti',
+    vendor:            'Mainostaulun Operaattori',
+    dates:             'Näyttelyn Päivämäärät',
+    photos:            'Todistuskuvat (väh. 2 vaaditaan)',
+    photosHint:        'Pudota kuvat tähän tai klikkaa ladataksesi',
+    notes:             'Lisätiedot',
+    cancel:            'Peruuta',
+    submitReview:      'Lähetä Tarkistettavaksi',
+    exhibitions:       'näyttelyä',
+    countries:         'maata',
+    poesVerified:      'POE vahvistettu',
+    navMap:            'kartta',
+    navExhibitions:    'näyttelyt',
+    navPunks:          'punkit',
+    navPoe:            'POE arkisto',
+    navAbout:          'tietoa',
+  },
+  ES: {
+    recentExhibitions: 'exposiciones recientes',
+    exhibitionDetail:  'detalle de exposición',
+    selectPunk:        'SELEC-\nCIONAR',
+    selectHint:        'Haz clic en un pin del mapa o\nen un elemento del feed para\nver detalles y POE.',
+    proofOf:           'Prueba de Exposición',
+    date:              'Fecha',
+    country:           'País',
+    billboard:         'Valla',
+    duration:          'Duración',
+    operator:          'Operador',
+    txHash:            'Hash TX',
+    poeVerified:       'POE Verificado On-Chain',
+    proofPhotos:       'Fotos de Prueba',
+    attributes:        'Atributos',
+    share:             'Compartir',
+    mintPoe:           'Mintear POE',
+    submitBtn:         '+ enviar exposición',
+    submitTitle:       'Enviar Exposición',
+    submitDesc:        'Envía tu exposición de CryptoPunk para verificación y archivo global.',
+    punkId:            'ID CryptoPunk',
+    wallet:            'Dirección Wallet (verificación propietario)',
+    location:          'Ubicación Valla',
+    vendor:            'Operador de Valla',
+    dates:             'Fechas de Exposición',
+    photos:            'Fotos de Prueba (mín. 2 requeridas)',
+    photosHint:        'Suelta fotos aquí o haz clic para subir',
+    notes:             'Notas Adicionales',
+    cancel:            'Cancelar',
+    submitReview:      'Enviar para Revisión',
+    exhibitions:       'exposiciones',
+    countries:         'países',
+    poesVerified:      'POEs verificados',
+    navMap:            'mapa',
+    navExhibitions:    'exposiciones',
+    navPunks:          'punks',
+    navPoe:            'archivo POE',
+    navAbout:          'acerca de',
+  },
+  PT: {
+    recentExhibitions: 'exposições recentes',
+    exhibitionDetail:  'detalhe da exposição',
+    selectPunk:        'SELEC-\nCIONAR',
+    selectHint:        'Clique num pino no mapa ou\nnum item no feed para ver\ndetalhes e POE.',
+    proofOf:           'Prova de Exposição',
+    date:              'Data',
+    country:           'País',
+    billboard:         'Painel',
+    duration:          'Duração',
+    operator:          'Operador',
+    txHash:            'Hash TX',
+    poeVerified:       'POE Verificado On-Chain',
+    proofPhotos:       'Fotos de Prova',
+    attributes:        'Atributos',
+    share:             'Partilhar',
+    mintPoe:           'Mintar POE',
+    submitBtn:         '+ submeter exposição',
+    submitTitle:       'Submeter Exposição',
+    submitDesc:        'Submeta a sua exposição CryptoPunk para verificação e arquivo global.',
+    punkId:            'ID CryptoPunk',
+    wallet:            'Endereço Wallet (verificação proprietário)',
+    location:          'Localização Painel',
+    vendor:            'Operador de Painel',
+    dates:             'Datas de Exposição',
+    photos:            'Fotos de Prova (mín. 2 necessárias)',
+    photosHint:        'Largue fotos aqui ou clique para carregar',
+    notes:             'Notas Adicionais',
+    cancel:            'Cancelar',
+    submitReview:      'Submeter para Revisão',
+    exhibitions:       'exposições',
+    countries:         'países',
+    poesVerified:      'POEs verificados',
+    navMap:            'mapa',
+    navExhibitions:    'exposições',
+    navPunks:          'punks',
+    navPoe:            'arquivo POE',
+    navAbout:          'sobre',
+  },
+  RO: {
+    recentExhibitions: 'expoziții recente',
+    exhibitionDetail:  'detalii expoziție',
+    selectPunk:        'SELECTAȚI\nUN PUNK',
+    selectHint:        'Faceți clic pe un pin de pe\nhartă sau pe un element din\nfeed pentru detalii și POE.',
+    proofOf:           'Dovadă de Expoziție',
+    date:              'Dată',
+    country:           'Țară',
+    billboard:         'Panou',
+    duration:          'Durată',
+    operator:          'Operator',
+    txHash:            'Hash TX',
+    poeVerified:       'POE Verificat On-Chain',
+    proofPhotos:       'Fotografii Dovadă',
+    attributes:        'Atribute',
+    share:             'Distribuie',
+    mintPoe:           'Mintează POE',
+    submitBtn:         '+ trimite expoziție',
+    submitTitle:       'Trimite Expoziție',
+    submitDesc:        'Trimiteți expoziția dvs. CryptoPunk pentru verificare și arhivare globală.',
+    punkId:            'ID CryptoPunk',
+    wallet:            'Adresă Wallet (verificare proprietar)',
+    location:          'Locație Panou',
+    vendor:            'Operator Panou',
+    dates:             'Date Expoziție',
+    photos:            'Fotografii Dovadă (min. 2 necesare)',
+    photosHint:        'Trageți fotografii aici sau faceți clic pentru a încărca',
+    notes:             'Note Suplimentare',
+    cancel:            'Anulare',
+    submitReview:      'Trimite pentru Revizuire',
+    exhibitions:       'expoziții',
+    countries:         'țări',
+    poesVerified:      'POE verificate',
+    navMap:            'hartă',
+    navExhibitions:    'expoziții',
+    navPunks:          'punks',
+    navPoe:            'arhivă POE',
+    navAbout:          'despre',
+  },
+  AR: {
+    recentExhibitions: 'المعارض الأخيرة',
+    exhibitionDetail:  'تفاصيل المعرض',
+    selectPunk:        'اختر\nPUNK',
+    selectHint:        'انقر على دبوس في الخريطة\nأو عنصر في التغذية لعرض\nالتفاصيل وPOE.',
+    proofOf:           'إثبات المعرض',
+    date:              'التاريخ',
+    country:           'البلد',
+    billboard:         'لوحة إعلانية',
+    duration:          'المدة',
+    operator:          'المشغل',
+    txHash:            'TX Hash',
+    poeVerified:       'تم التحقق من POE على السلسلة',
+    proofPhotos:       'صور الإثبات',
+    attributes:        'الصفات',
+    share:             'مشاركة',
+    mintPoe:           'سك POE',
+    submitBtn:         '+ تقديم معرض',
+    submitTitle:       'تقديم المعرض',
+    submitDesc:        'قدم معرض CryptoPunk الخاص بك للتحقق منه وأرشفته عالمياً.',
+    punkId:            'معرف CryptoPunk',
+    wallet:            'عنوان المحفظة (التحقق من المالك)',
+    location:          'موقع اللوحة الإعلانية',
+    vendor:            'مشغل اللوحة الإعلانية',
+    dates:             'تواريخ المعرض',
+    photos:            'صور الإثبات (2 على الأقل)',
+    photosHint:        'أسقط الصور هنا أو انقر للرفع',
+    notes:             'ملاحظات إضافية',
+    cancel:            'إلغاء',
+    submitReview:      'تقديم للمراجعة',
+    exhibitions:       'معارض',
+    countries:         'دول',
+    poesVerified:      'POE موثقة',
+    navMap:            'خريطة',
+    navExhibitions:    'معارض',
+    navPunks:          'بانكس',
+    navPoe:            'أرشيف POE',
+    navAbout:          'عن',
+  },
+  HI: {
+    recentExhibitions: 'हालिया प्रदर्शनियां',
+    exhibitionDetail:  'प्रदर्शनी विवरण',
+    selectPunk:        'पंक\nचुनें',
+    selectHint:        'विवरण और POE देखने के लिए\nमानचित्र पर पिन या फ़ीड\nआइटम पर क्लिक करें।',
+    proofOf:           'प्रदर्शनी का प्रमाण',
+    date:              'तारीख',
+    country:           'देश',
+    billboard:         'बिलबोर्ड',
+    duration:          'अवधि',
+    operator:          'संचालक',
+    txHash:            'TX हैश',
+    poeVerified:       'POE ऑन-चेन सत्यापित',
+    proofPhotos:       'प्रमाण फ़ोटो',
+    attributes:        'विशेषताएं',
+    share:             'साझा करें',
+    mintPoe:           'POE मिंट',
+    submitBtn:         '+ प्रदर्शनी सबमिट करें',
+    submitTitle:       'प्रदर्शनी सबमिट करें',
+    submitDesc:        'वैश्विक सत्यापन के लिए अपनी CryptoPunk बिलबोर्ड प्रदर्शनी सबमिट करें।',
+    punkId:            'CryptoPunk ID',
+    wallet:            'वॉलेट पता (मालिक सत्यापन)',
+    location:          'बिलबोर्ड स्थान',
+    vendor:            'बिलबोर्ड संचालक',
+    dates:             'प्रदर्शनी तिथियां',
+    photos:            'प्रमाण फ़ोटो (न्यूनतम 2)',
+    photosHint:        'यहां फ़ोटो छोड़ें या अपलोड करने के लिए क्लिक करें',
+    notes:             'अतिरिक्त नोट्स',
+    cancel:            'रद्द करें',
+    submitReview:      'समीक्षा के लिए सबमिट करें',
+    exhibitions:       'प्रदर्शनियां',
+    countries:         'देश',
+    poesVerified:      'POE सत्यापित',
+    navMap:            'नक्शा',
+    navExhibitions:    'प्रदर्शनियां',
+    navPunks:          'पंक्स',
+    navPoe:            'POE संग्रह',
+    navAbout:          'के बारे में',
+  },
+  IT: {
+    recentExhibitions: 'esposizioni recenti',
+    exhibitionDetail:  'dettaglio esposizione',
+    selectPunk:        'SELEZIONA\nPUNK',
+    selectHint:        'Clicca un pin sulla mappa o\nun elemento nel feed per vedere\ni dettagli e il POE.',
+    proofOf:           'Prova di Esposizione',
+    date:              'Data',
+    country:           'Paese',
+    billboard:         'Cartellone',
+    duration:          'Durata',
+    operator:          'Operatore',
+    txHash:            'TX Hash',
+    poeVerified:       'POE Verificato On-Chain',
+    proofPhotos:       'Foto Prova',
+    attributes:        'Attributi',
+    share:             'Condividi',
+    mintPoe:           'Conia POE',
+    submitBtn:         '+ invia esposizione',
+    submitTitle:       'Invia Esposizione',
+    submitDesc:        'Invia la tua esposizione CryptoPunk per verifica e archiviazione globale.',
+    punkId:            'ID CryptoPunk',
+    wallet:            'Indirizzo Wallet (verifica proprietario)',
+    location:          'Posizione Cartellone',
+    vendor:            'Operatore Cartellone',
+    dates:             'Date Esposizione',
+    photos:            'Foto Prova (min. 2 richieste)',
+    photosHint:        'Trascina foto qui o clicca per caricare',
+    notes:             'Note Aggiuntive',
+    cancel:            'Annulla',
+    submitReview:      'Invia per Revisione',
+    exhibitions:       'esposizioni',
+    countries:         'paesi',
+    poesVerified:      'POE verificati',
+    navMap:            'mappa',
+    navExhibitions:    'esposizioni',
+    navPunks:          'punks',
+    navPoe:            'archivio POE',
+    navAbout:          'chi siamo',
+  },
+  KO: {
+    recentExhibitions: '최근 전시',
+    exhibitionDetail:  '전시 상세정보',
+    selectPunk:        '펑크를\n선택하세요',
+    selectHint:        '지도의 핀이나 피드 항목을\n클릭하여 전시 세부 정보와\nPOE를 확인하세요.',
+    proofOf:           '전시 증명',
+    date:              '날짜',
+    country:           '국가',
+    billboard:         '빌보드',
+    duration:          '기간',
+    operator:          '운영자',
+    txHash:            'TX 해시',
+    poeVerified:       'POE 온체인 인증됨',
+    proofPhotos:       '증명 사진',
+    attributes:        '속성',
+    share:             '공유',
+    mintPoe:           'POE 민팅',
+    submitBtn:         '+ 전시 제출',
+    submitTitle:       '전시 제출',
+    submitDesc:        '글로벌 검증을 위해 CryptoPunk 빌보드 전시를 제출하세요.',
+    punkId:            'CryptoPunk ID',
+    wallet:            '지갑 주소 (소유자 확인)',
+    location:          '빌보드 위치',
+    vendor:            '빌보드 운영자',
+    dates:             '전시 날짜',
+    photos:            '증명 사진 (최소 2장)',
+    photosHint:        '여기에 사진을 드롭하거나 클릭하여 업로드',
+    notes:             '추가 메모',
+    cancel:            '취소',
+    submitReview:      '검토를 위해 제출',
+    exhibitions:       '전시',
+    countries:         '국가',
+    poesVerified:      'POE 인증됨',
+    navMap:            '지도',
+    navExhibitions:    '전시',
+    navPunks:          '펑크',
+    navPoe:            'POE 아카이브',
+    navAbout:          '소개',
+  },
+  ZH: {
+    recentExhibitions: '最新展览',
+    exhibitionDetail:  '展览详情',
+    selectPunk:        '选择\n朋克',
+    selectHint:        '点击地图上的图钉或信息流\n中的项目以查看展览详情\n和POE。',
+    proofOf:           '展览证明',
+    date:              '日期',
+    country:           '国家',
+    billboard:         '广告牌',
+    duration:          '时长',
+    operator:          '运营商',
+    txHash:            'TX 哈希',
+    poeVerified:       'POE 链上已验证',
+    proofPhotos:       '证明照片',
+    attributes:        '属性',
+    share:             '分享',
+    mintPoe:           '铸造 POE',
+    submitBtn:         '+ 提交展览',
+    submitTitle:       '提交展览',
+    submitDesc:        '提交您的 CryptoPunk 广告牌展览，进行全球验证和存档。',
+    punkId:            'CryptoPunk ID',
+    wallet:            '钱包地址（所有者验证）',
+    location:          '广告牌位置',
+    vendor:            '广告牌运营商',
+    dates:             '展览日期',
+    photos:            '证明照片（至少 2 张）',
+    photosHint:        '将照片拖放至此处或点击上传',
+    notes:             '附加说明',
+    cancel:            '取消',
+    submitReview:      '提交审核',
+    exhibitions:       '展览',
+    countries:         '国家',
+    poesVerified:      'POE 已验证',
+    navMap:            '地图',
+    navExhibitions:    '展览',
+    navPunks:          '朋克',
+    navPoe:            'POE 档案',
+    navAbout:          '关于',
+  },
+};
+
+// RTL languages
+const RTL_LANGS = ['AR'];
+
+let currentLang = 'EN';
+let detectedCountryCode = null;
+
+// Build dropdown options
+function buildLangDropdown(detectedCode) {
+  const dropdown = document.getElementById('langDropdown');
+  dropdown.innerHTML = '';
+  LANGUAGES.forEach(lang => {
+    const isDetected = lang.countries.includes(detectedCode);
+    const div = document.createElement('div');
+    div.className = 'lang-option' + (lang.code === currentLang ? ' active' : '');
+    div.dataset.code = lang.code;
+    div.innerHTML = `
+      <span class="opt-flag">${lang.flag}</span>
+      <span class="opt-name">${lang.name}</span>
+      <span class="opt-native">${lang.native}</span>
+      ${isDetected ? '<span class="lang-detected">DETECTED</span>' : ''}
+    `;
+    div.addEventListener('click', () => {
+      setLanguage(lang.code);
+      closeLangDropdown();
+    });
+    dropdown.appendChild(div);
+  });
+}
+
+function toggleLangDropdown() {
+  const sel = document.getElementById('langSelector');
+  sel.classList.toggle('open');
+}
+function closeLangDropdown() {
+  document.getElementById('langSelector').classList.remove('open');
+}
+// Close on outside click
+document.addEventListener('click', (e) => {
+  if (!document.getElementById('langSelector').contains(e.target)) {
+    closeLangDropdown();
+  }
+});
+
+function setLanguage(code) {
+  const lang = LANGUAGES.find(l => l.code === code);
+  if (!lang) return;
+  currentLang = code;
+  localStorage.setItem('pb2-lang', code);
+
+  // Update button
+  document.getElementById('langFlag').textContent = lang.flag;
+  document.getElementById('langCode').textContent = code;
+
+  // RTL support
+  document.documentElement.setAttribute('dir', RTL_LANGS.includes(code) ? 'rtl' : 'ltr');
+
+  // Apply translations
+  const t = TRANSLATIONS[code] || TRANSLATIONS.EN;
+  applyTranslations(t);
+
+  // Update active state in dropdown
+  document.querySelectorAll('.lang-option').forEach(el => {
+    el.classList.toggle('active', el.dataset.code === code);
+  });
+}
+
+function applyTranslations(t) {
+  // Nav links
+  const navLinks = document.querySelectorAll('.nav-links a');
+  const navKeys = ['navMap', 'navExhibitions', 'navPunks', 'navPoe', 'navAbout'];
+  navLinks.forEach((a, i) => { if (navKeys[i]) a.textContent = t[navKeys[i]]; });
+
+  // Submit btn in nav
+  document.querySelector('.submit-btn').textContent = t.submitBtn;
+
+  // Feed panel header
+  const feedHeader = document.querySelector('.feed-panel .panel-header');
+  if (feedHeader) feedHeader.childNodes[feedHeader.childNodes.length - 1].textContent = ' ' + t.recentExhibitions;
+
+  // Detail panel header
+  const detailHeader = document.querySelector('.detail-panel .panel-header');
+  if (detailHeader) detailHeader.textContent = t.exhibitionDetail;
+
+  // Empty state
+  const bigLabel = document.querySelector('.detail-empty .big-label');
+  if (bigLabel) bigLabel.innerHTML = t.selectPunk.replace('\n', '<br>');
+  const hint = document.querySelector('.detail-empty p');
+  if (hint) hint.innerHTML = t.selectHint.replace(/\n/g, '<br>');
+
+  // POE block labels
+  const poeRows = document.querySelectorAll('.poe-row');
+  const poeKeys = ['date', 'country', 'billboard', 'duration', 'operator', 'txHash'];
+  poeRows.forEach((row, i) => {
+    if (poeKeys[i]) {
+      const span = row.querySelector('span');
+      row.childNodes[0].textContent = t[poeKeys[i]] + ' ';
+      // re-append span
+      if (span) row.appendChild(span);
+    }
+  });
+
+  const poeTitle = document.querySelector('.poe-title');
+  if (poeTitle) poeTitle.textContent = t.proofOf;
+
+  const poeVerifiedEl = document.getElementById('poeVerified');
+  if (poeVerifiedEl) {
+    const dot = poeVerifiedEl.querySelector('.live-dot');
+    poeVerifiedEl.textContent = t.poeVerified;
+    if (dot) poeVerifiedEl.prepend(dot);
+  }
+
+  // Proof photos label
+  const photosLabel = document.querySelector('.detail-info > div[style*="proof"]') ||
+    [...document.querySelectorAll('.detail-info > div')].find(el => el.style.textTransform === 'uppercase' && !el.classList.length);
+
+  // Action buttons
+  const actionBtns = document.querySelectorAll('.detail-actions button');
+  if (actionBtns[0]) actionBtns[0].textContent = t.share;
+  if (actionBtns[1]) actionBtns[1].textContent = t.mintPoe;
+
+  // Counters
+  const pills = document.querySelectorAll('.counter-pill');
+  if (pills[0]) pills[0].innerHTML = `<strong id="totalCount">${document.getElementById('totalCount')?.textContent || 0}</strong> ${t.exhibitions}`;
+  if (pills[1]) pills[1].innerHTML = `<strong id="countryCount">${document.getElementById('countryCount')?.textContent || 0}</strong> ${t.countries}`;
+  if (pills[2]) pills[2].innerHTML = `<strong id="poeCount">${document.getElementById('poeCount')?.textContent || 0}</strong> ${t.poesVerified}`;
+
+  // Modal
+  document.querySelector('.modal-title').textContent = t.submitTitle;
+  const modalDesc = document.querySelector('.modal-body > div:first-child');
+  if (modalDesc) modalDesc.textContent = t.submitDesc;
+
+  const fieldLabels = document.querySelectorAll('.field-label');
+  const fieldKeys = ['punkId', 'wallet', 'location', 'vendor', 'dates', 'photos', 'notes'];
+  fieldLabels.forEach((el, i) => { if (fieldKeys[i]) el.textContent = t[fieldKeys[i]]; });
+
+  const uploadZone = document.querySelector('.upload-zone');
+  if (uploadZone) {
+    const hint = uploadZone.querySelector('span');
+    uploadZone.childNodes[0].textContent = t.photosHint + '\n';
+  }
+
+  const footerBtns = document.querySelectorAll('.modal-footer button');
+  if (footerBtns[0]) footerBtns[0].textContent = t.cancel;
+  if (footerBtns[1]) footerBtns[1].textContent = t.submitReview;
+}
+
+// ── GEOLOCATION VIA ipapi.co (free, no key required) ──
+async function detectLanguageFromIP() {
+  try {
+    const res = await fetch('https://ipapi.co/json/', { signal: AbortSignal.timeout(4000) });
+    const data = await res.json();
+    detectedCountryCode = data.country_code || null;
+
+    // Find best language match
+    if (detectedCountryCode) {
+      const match = LANGUAGES.find(l => l.countries.includes(detectedCountryCode));
+      if (match && match.code !== 'EN') {
+        const saved = localStorage.getItem('pb2-lang');
+        // Only auto-apply if user hasn't manually chosen before
+        if (!saved) setLanguage(match.code);
+      }
+    }
+  } catch (e) {
+    // Silently fail — network blocked or timed out, stay on EN
+  } finally {
+    buildLangDropdown(detectedCountryCode);
+  }
+}
+
+// Init language
+const savedLang = localStorage.getItem('pb2-lang');
+if (savedLang && TRANSLATIONS[savedLang]) {
+  setLanguage(savedLang);
+} else {
+  buildLangDropdown(null);
+  detectLanguageFromIP();
+}
 const themeToggle = document.getElementById('themeToggle');
 const html = document.documentElement;
 
